@@ -69,6 +69,7 @@ final class MapViewModel {
 
     var position: MapCameraPosition
     var selection: MapSelection<MKMapItem>? = nil
+    var markerSelection: MKMapItem? = nil
     
     let store: DiscoveredPolygonsStore
     
@@ -255,8 +256,24 @@ final class MapViewModel {
         isSheetPresented = true
     }
     
+    func handleSelection(_ selection: MapSelection<MKMapItem>?) {
+        guard let selection else {
+            clearSelection()
+            return
+        }
+        
+        // Wenn ein MapFeature vorhanden ist, wurde ein POI geklickt
+        if let feature = selection.feature {
+            handleFeatureSelection(feature)
+        } else if let mapItem = selection.value {
+            selectedMapItem = mapItem
+            isSheetPresented = true
+        }
+    }
+    
     func clearSelection() {
         selection = nil
+        markerSelection = nil
         selectedMapItem = nil
         isSheetPresented = false
     }
