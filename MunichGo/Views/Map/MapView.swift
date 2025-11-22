@@ -12,17 +12,22 @@ struct MapView: View {
     @State private var viewModel = MapViewModel()
     
     var body: some View {
-        Map(position: $viewModel.position, selection: $viewModel.selection) {
-            UserAnnotation()
+        ZStack {
+            Map(position: $viewModel.position, selection: $viewModel.selection) {
+                UserAnnotation()
+                
+                MapPolygon(viewModel.worldOverlay)
+                    .foregroundStyle(.gray.opacity(0.7))
+            }
+            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(viewModel.pointsOfInterest)))
+            .mapControls({
+                MapUserLocationButton()
+                MapCompass()
+                MapPitchToggle()
+            })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(.all, edges: [.leading, .trailing, .bottom])
         }
-        .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(viewModel.pointsOfInterest)))
-        .mapControls({
-            MapUserLocationButton()
-            MapCompass()
-            MapPitchToggle()
-        })
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea(.all, edges: [.leading, .trailing, .bottom])
         .onChange(of: viewModel.selection) { _, newValue in
             viewModel.handleFeatureSelection(newValue?.feature)
         }
@@ -36,6 +41,9 @@ struct MapView: View {
                     .presentationBackgroundInteraction(.enabled)
             }
         }
+       .toolbar {
+           MapToolbar(viewModel: viewModel)
+       }
     }
 }
 
