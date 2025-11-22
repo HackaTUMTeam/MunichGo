@@ -83,6 +83,7 @@ struct MapView: View {
         if viewModel.showSaved {
             ForEach(viewModel.savedItems, id: \.self) { item in
                 Marker(item.name ?? "", coordinate: item.location.coordinate)
+                    .tint(viewModel.poiService.status(for: item, modelContext: modelContext) == PlaceListType.visited ? .green : .blue)
                     .tag(MapSelection(item))
             }
         }

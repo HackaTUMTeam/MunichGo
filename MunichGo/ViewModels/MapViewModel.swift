@@ -253,7 +253,6 @@ final class MapViewModel {
         }
 
         isSheetPresented = true
-        sheetDetent = .height(180)
     }
     
     func clearSelection() {

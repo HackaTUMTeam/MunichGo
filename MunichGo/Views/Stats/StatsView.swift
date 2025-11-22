@@ -8,8 +8,6 @@
 import SwiftUI
 
 struct StatsView: View {
-    @Environment(MapViewModel.self) var mapViewModel
-    
     // 1. Define the grid layout: 4 columns
     let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
     
@@ -34,14 +32,14 @@ struct StatsView: View {
                     .padding()
                 
                 // --- Progress Bars ---
-                HStack(spacing: 20) {
-                    CircularProgressBar(progress: Double(mapViewModel.cityExploration) / 100.0, color: .blue, title: "Exploration", systemImageName: "map", appendix: " %", max: 1.0)
-                        .frame(width: 150, height: 150).padding(.horizontal, 5)
-                    
-                    CircularProgressBar(progress: Double(mapViewModel.greenScore) / 100.0, color: .green, title: "Green Score", systemImageName: "leaf", appendix: "", max: 1.0)
-                        .frame(width: 150, height: 150).padding(.horizontal, 5)
-                }
-                .padding(.vertical, 15)
+//                HStack(spacing: 20) {
+//                    CircularProgressBar(progress: Double(mapViewModel.cityExploration) / 100.0, color: .blue, title: "Exploration", systemImageName: "map", appendix: " %", max: 1.0)
+//                        .frame(width: 150, height: 150).padding(.horizontal, 5)
+//                    
+//                    CircularProgressBar(progress: Double(mapViewModel.greenScore) / 100.0, color: .green, title: "Green Score", systemImageName: "leaf", appendix: "", max: 1.0)
+//                        .frame(width: 150, height: 150).padding(.horizontal, 5)
+//                }
+//                .padding(.vertical, 15)
                 
                 HStack(spacing: 20) {
                     CircularProgressBar(progress: 55.0 / 100.0, color: .orange, title: "Locations", systemImageName: "mappin.and.ellipse", appendix: "", max: 1.0)
