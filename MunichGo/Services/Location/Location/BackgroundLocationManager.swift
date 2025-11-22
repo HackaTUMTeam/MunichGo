@@ -45,8 +45,20 @@ class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
         
         print("\(Cells.count) Cells visited")
     }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedAlways:
+            print("✅ Permission: Always - Background updates will work silently.")
+        case .authorizedWhenInUse:
+            print("⚠️ Permission: When In Use - Background updates only work if Blue Bar is active.")
+        case .denied, .restricted:
+            print("❌ Permission: Denied - No updates.")
+        case .notDetermined:
+            print("❓ Permission: Not Determined yet.")
+        @unknown default:
+            break
+        }
+    }
 }
 
-func updateCells(){
-    
-}
