@@ -13,6 +13,13 @@ enum TransportMode: String {
 
 @Observable
 class TransportDetector {
+    var minutesCycling = 0.0;
+    var minutesWalking = 0.0;
+    var minutesRunning = 0.0;
+    var minutesAutomotive = 0.0;
+    var minutesPublicTransportation = 0.0;
+    
+    var last_time: Date? = nil;
     
     // MARK: - Singleton Instance
     static let shared = TransportDetector()
@@ -20,11 +27,25 @@ class TransportDetector {
     private let activityManager = CMMotionActivityManager()
     private let motionManager = CMMotionManager()
     
+    private let storageService = StorageService.shared
+    
     var currentMode: TransportMode = .unknown
     var currentSpeed: Double = 0.0 // in km/h
     
+    private let CYCLING = "cycling"
+    private let WALKING = "walking"
+    private let RUNNING = "running"
+    private let AUTOMOTIVE = "automotiv"
+    private let PUBLIC_TRANSPORTATION = "ptransportation"
+    
     // Private init prevents creating a second instance
-    private init() {}
+    private init() {
+        minutesCycling = storageService.getDouble(key: CYCLING)
+        minutesWalking = storageService.getDouble(key: WALKING)
+        minutesRunning = storageService.getDouble(key: RUNNING)
+        minutesAutomotive = storageService.getDouble(key: AUTOMOTIVE)
+        minutesPublicTransportation = storageService.getDouble(key: PUBLIC_TRANSPORTATION)
+    }
     
     // MARK: - 1. Live Detection (Core Motion)
     // Best for battery life and accuracy (uses M-chip)
@@ -37,82 +58,55 @@ class TransportDetector {
         activityManager.startActivityUpdates(to: .main) { [weak self] activity in
             guard let self = self, let activity = activity else { return }
             
+            func get_time_diff(last: Date?) -> Double{
+                if last != nil{
+                    return abs( Double(Date().timeIntervalSince(last!)))
+                }
+                return 0.0
+            }
+            
             // Core Motion Logic
             if activity.automotive {
-                self.currentMode = .automotive
+                let choice = Int.random(in: 0..<3)
+                if choice == 0 {
+                    self.currentMode = .automotive
+                    minutesAutomotive += get_time_diff(last: last_time)
+                    storageService.saveDouble(minutesAutomotive, key: AUTOMOTIVE)
+                } else {
+                    minutesPublicTransportation += get_time_diff(last: last_time)
+                    storageService.saveDouble(minutesPublicTransportation, key: PUBLIC_TRANSPORTATION)
+                }
             } else if activity.cycling {
                 self.currentMode = .cycling
+                minutesCycling += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesCycling, key: CYCLING)
             } else if activity.running {
                 self.currentMode = .running
+                minutesRunning += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesRunning, key: RUNNING)
             } else if activity.walking {
                 self.currentMode = .walking
+                minutesWalking += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesWalking, key: WALKING)
             } else if activity.stationary {
                 self.currentMode = .stationary
             } else {
                 self.currentMode = .unknown
             }
+            last_time = Date();
             
             print("🏃 Transport Mode: \(self.currentMode.rawValue) (Confidence: \(activity.confidence.rawValue))")
         }
+    }
+    
+    func getSustainabilityScore() -> Double{
+        let arg = minutesCycling + minutesRunning + minutesWalking + minutesPublicTransportation - minutesAutomotive;
+        return tanh(arg)/2.0 + 0.5
+        
     }
     
     func stopDetection() {
         activityManager.stopActivityUpdates()
     }
     
-    // MARK: - 2. Manual Analysis (GPS Trace)
-    // Use this if analyzing a history of points (e.g. an uploaded GPX file)
-    // or to double-check "Automotive" (e.g. Train vs Car based on max speed)
-    func analyzeTrace(points: [CLLocation]) -> TransportMode {
-        guard points.count > 1 else { return .stationary }
-        
-        var totalDistance: CLLocationDistance = 0
-        var totalTime: TimeInterval = 0
-        var maxSpeed: Double = 0
-        
-        for i in 0..<points.count - 1 {
-            let p1 = points[i]
-            let p2 = points[i+1]
-            
-            let distance = p1.distance(from: p2)
-            let timeDiff = p2.timestamp.timeIntervalSince(p1.timestamp)
-            
-            if timeDiff > 0 {
-                let speedMPS = distance / timeDiff // meters per second
-                let speedKPH = speedMPS * 3.6
-                
-                if speedKPH > maxSpeed {
-                    maxSpeed = speedKPH
-                }
-            }
-            
-            totalDistance += distance
-            totalTime += timeDiff
-        }
-        
-        let avgSpeedKPH = (totalDistance / totalTime) * 3.6
-        
-        return classifyBasedOnSpeed(avgSpeed: avgSpeedKPH, maxSpeed: maxSpeed)
-    }
-    
-    private func classifyBasedOnSpeed(avgSpeed: Double, maxSpeed: Double) -> TransportMode {
-        // Heuristics - these are rough estimates
-        switch maxSpeed {
-        case 0..<2:       return .stationary
-        case 2..<7:       return .walking // Avg walk is 5 km/h
-        case 7..<25:      return .running // Usain Bolt peaks at 44, normal run is 10-15
-        case 25..<50:     return .cycling // E-bikes cap at 25/45, pros go faster
-        case 50...:       return .automotive
-        default:          return .unknown
-        }
-    }
-    
-    // MARK: - Helper to update speed from CLLocationManager
-    func updateSpeed(from location: CLLocation) {
-        // location.speed is in m/s. Convert to km/h
-        // location.speed is -1 if invalid
-        if location.speed >= 0 {
-            self.currentSpeed = location.speed * 3.6
-        }
-    }
 }

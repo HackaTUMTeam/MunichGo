@@ -17,49 +17,6 @@ struct FadingPolygon: Identifiable {
     var opacity: Double = 0.7
 }
 
-let trackedCategories: Set<MKPointOfInterestCategory> = [
-    // Essen & Trinken
-    .bakery,
-    .restaurant,
-    .cafe,
-    .foodMarket,
-
-    // Kultur & Freizeit
-    .amusementPark,
-    .aquarium,
-    .zoo,
-    .museum,
-    .theater,
-    .stadium,
-    .nightlife,
-
-    // Natur & Outdoor
-    .park,
-    .beach,
-    
-    // Sightseeing / Tourismus
-    .landmark,
-
-    // Sport & Aktivitäten
-    .fitnessCenter,
-
-    // Shopping
-    .store,
-
-    // Verkehr & Mobilität
-    .publicTransport,
-    .airport,
-
-    // Öffentliche Einrichtungen
-    .library,
-    .school,
-    .university,
-
-    // Gesundheit
-    .hospital,
-    .pharmacy
-]
-
 @Observable
 final class MapViewModel {
     let munichCenter = CLLocationCoordinate2D(latitude: Constants.MUNICH_LAT, longitude: Constants.MUNICH_LON)
@@ -72,6 +29,7 @@ final class MapViewModel {
     var markerSelection: MKMapItem? = nil
     
     let store: DiscoveredPolygonsStore
+    let transportDetection: TransportDetector
     
     var fogOverlay: MKPolygon = MKPolygon()
     var fogOverlayVersion: UUID = UUID()
@@ -94,36 +52,38 @@ final class MapViewModel {
     var isSheetPresented: Bool = false
     var sheetDetent: PresentationDetent = .medium
     
+    // New: Dex sheet presentation flag
+    var isDexPresented: Bool = false
+    
     var cityExploration: Int = 0
     var greenScore: Int = 0
     
     var isZoomedOut = false
-    var showSaved = false
+    var showSaved = true
     
     let poiService: POIProgressServicing
     let region: MKCoordinateRegion
     let categories: Set<MKPointOfInterestCategory>
     
     var savedItems: [MKMapItem] = []
+    
+    // MARK: - Live Location Tracking
+    private var currentLocation: CLLocationCoordinate2D?
+    var nearbyPlace: MKMapItem? = nil
+    var isTrackingLocation = false
 
-    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared) {
+    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared, transportDetection: TransportDetector = TransportDetector.shared) {
         self.store = store
+        self.transportDetection = transportDetection
         
         self.region = MKCoordinateRegion(center: munichCenter, span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
-        self.categories = trackedCategories
+        self.categories = MKPointOfInterestCategory.trackedCategories
         self.poiService = poiService
         self.position = .region(region)
-        
-        self.position = .region(
-            MKCoordinateRegion(
-                center: munichCenter,
-                span: defaultZoom
-            )
-        )
                 
         Task { @MainActor in
             cityExploration = Int(store.percentageDiscovered() * 100)
-            greenScore = Int.random(in: 0..<101)
+            greenScore = Int(transportDetection.getSustainabilityScore() * 100)
         }
         
         // munichPolygons wird jetzt lazy geladen - erst beim ersten Zugriff
@@ -188,6 +148,9 @@ final class MapViewModel {
                 fadingPolygons.removeAll { $0.id == fading.id }
             }
         }
+        
+        cityExploration = Int(store.percentageDiscovered() * 100)
+        greenScore = Int(transportDetection.getSustainabilityScore() * 100)
     }
     
     private func buildWorldOverlay() {
@@ -312,6 +275,124 @@ final class MapViewModel {
         
         isZoomedOut.toggle()
     }
+    
+    func setDiscoveredMock() {
+//        store.add(cells: Array(generateMunichH3Tiles()))
+//        print(discoveredPolygons.count)
+    }
+    
+    // MARK: - Live Location Tracking
+    
+    func startLocationTracking() {
+        isTrackingLocation = true
+        Task {
+            await trackLocationUpdates()
+        }
+    }
+    
+    func stopLocationTracking() {
+        isTrackingLocation = false
+        nearbyPlace = nil
+    }
+    
+    private func trackLocationUpdates() async {
+        // Initiale Suche
+        await refreshNearbyPlace()
+        
+        // Kontinuierliche Updates
+        while isTrackingLocation && !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 15_000_000_000) // 15 Sekunden
+            await refreshNearbyPlace()
+        }
+    }
+    
+    func refreshNearbyPlace() async {
+        // Hole aktuelle Location vom BackgroundLocationManager
+        guard let location = BackgroundLocationManager.shared.manager.location?.coordinate else {
+            currentLocation = nil
+            return
+        }
+        
+        // Prüfe ob sich die Position signifikant geändert hat (>30m)
+        if let lastLocation = currentLocation {
+            let distance = CLLocation(latitude: lastLocation.latitude, longitude: lastLocation.longitude)
+                .distance(from: CLLocation(latitude: location.latitude, longitude: location.longitude))
+            
+            // Keine Update wenn Bewegung < 30m
+            if distance < 30 {
+                return
+            }
+        }
+        
+        currentLocation = location
+                
+        // Suche nahegelegene POIs (50m Radius)
+        if let place = await poiService.suggestNearbyPlace(
+            coordinate: location,
+            categories: categories,
+            maxDistance: 50
+        ) {            
+            // Prüfe ob es ein neuer Ort ist
+            let isSamePlace = nearbyPlace?.name == place.name
+            
+            // Hole Status vom Context (muss auf MainActor sein)
+            await MainActor.run {
+                // Zeige nur an, wenn noch nicht besucht oder auf Wishlist
+                // Status wird später in der View gecheckt
+                if !isSamePlace {
+                    nearbyPlace = place
+                }
+            }
+        } else {
+            // Kein Ort gefunden
+            await MainActor.run {
+                nearbyPlace = nil
+            }
+        }
+    }
+    
+    func dismissNearbyPlace() {
+        nearbyPlace = nil
+    }
+    
+    func generateMunichH3Tiles() -> Set<H3Cell> {
+        let center = CLLocationCoordinate2D(latitude: 48.137154, longitude: 11.576124)
+
+        // 10 × 10 Tiles = 100 Zellen
+        let rows = 30
+        let cols = 30
+
+        // In Grad (~6 km × 6 km)
+        let totalLatDelta = 0.9
+        let totalLonDelta = 0.12
+
+        let tileLat = totalLatDelta / Double(rows)
+        let tileLon = totalLonDelta / Double(cols)
+
+        var result: Set<H3Cell> = []
+
+        for r in 0..<rows {
+            for c in 0..<cols {
+
+                // Offset vom Zentrum
+                let latOffset = (Double(r) - Double(rows)/2 + 0.5) * tileLat
+                let lonOffset = (Double(c) - Double(cols)/2 + 0.5) * tileLon
+
+                // Zentrum des Tiles
+                let tileCenter = CLLocationCoordinate2D(
+                    latitude: center.latitude + latOffset,
+                    longitude: center.longitude + lonOffset
+                )
+
+                // H3 Cell berechnen
+                if let cells = adjacentH3FromPos(lat: tileCenter.latitude, lng: tileCenter.longitude) {
+                    result.formUnion(cells)
+                }
+            }
+        }
+
+        return result
+    }
 }
 
 extension MKPolygon {
@@ -336,3 +417,4 @@ extension MKPolygon {
         return renderer.path.contains(point)
     }
 }
+

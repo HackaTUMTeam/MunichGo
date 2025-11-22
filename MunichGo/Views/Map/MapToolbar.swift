@@ -8,22 +8,31 @@
 import SwiftUI
 
 struct MapToolbar: ToolbarContent {
+    @Environment(\.modelContext) private var modelContext
     @State var viewModel: MapViewModel
     
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Text("\(viewModel.cityExploration) %")
-                .frame(width: 70)
+            NavigationLink {
+                ExplorationDetailView(viewModel: StatsViewModel(store: viewModel.store, modelContext: modelContext))
+            } label: {
+                Text("\(viewModel.cityExploration) %")
+                    .frame(width: 60)
+            }
         }
         
         ToolbarItem(placement: .topBarLeading) {
-            HStack {
-                Image(systemName: "leaf.fill")
-                
-                Text("\(viewModel.greenScore)")
+            NavigationLink {
+                GreenScoreDetailView(viewModel: StatsViewModel(store: viewModel.store, modelContext: modelContext))
+            } label: {
+                HStack {
+                    Image(systemName: "leaf.fill")
+                    
+                    Text("\(viewModel.greenScore)")
+                }
+                .foregroundStyle(.green)
+                .frame(width: 70)
             }
-            .foregroundStyle(.green)
-            .frame(width: 90)
         }
         
         ToolbarItem(placement: .topBarTrailing) {
@@ -33,10 +42,9 @@ struct MapToolbar: ToolbarContent {
                 }
             } label: {
                 if viewModel.showSaved {
-                    Image(systemName: "pin.slash.fill")
-                } else {
                     Image(systemName: "pin.fill")
-
+                } else {
+                    Image(systemName: "pin.slash.fill")
                 }
             }
         }
@@ -65,5 +73,18 @@ struct MapToolbar: ToolbarContent {
                 Image(systemName: "arrow.counterclockwise")
             }
         }
+        
+        // New: Pokédex button
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                withAnimation {
+                    viewModel.isDexPresented = true
+                }
+            } label: {
+                Image(systemName: "book.closed.fill") // represents a 'dex'
+            }
+            .accessibilityLabel("Open Pokédex")
+        }
     }
 }
+

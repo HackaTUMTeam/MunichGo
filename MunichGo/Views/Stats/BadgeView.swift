@@ -58,7 +58,7 @@ struct BadgeView: View {
             Text(badge.name)
                 .font(.caption)
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(1)
                 .frame(maxWidth: .infinity)
 
             // Level pill

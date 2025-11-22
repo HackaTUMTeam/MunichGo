@@ -13,7 +13,7 @@ import SwiftyH3
 final class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
 
     static let shared = BackgroundLocationManager()
-    private let manager = CLLocationManager()
+    private(set) var manager = CLLocationManager()
 
     private var store: DiscoveredPolygonsStore?
 

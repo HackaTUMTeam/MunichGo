@@ -21,14 +21,33 @@ struct MapView: View {
                    onDismiss: { viewModel.clearSelection() }) {
                 placeSheetContent
             }
+            // Present the real Pokédex view now
+            .sheet(isPresented: $viewModel.isDexPresented) {
+                PokedexView()
+            }
             .toolbar {
                 MapToolbar(viewModel: viewModel)
+            }
+            .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    if let place = viewModel.nearbyPlace {
+                        LiveLocationToolbarItem(
+                            viewModel: viewModel,
+                            place: place,
+                            modelContext: modelContext
+                        )
+                    }
+                }
             }
             .onChange(of: viewModel.store.cells) { _, newCells in
                 viewModel.updateFromCells(newCells)
             }
             .task {
                 viewModel.reloadSaved(modelContext: modelContext)
+                viewModel.startLocationTracking()
+            }
+            .onDisappear {
+                viewModel.stopLocationTracking()
             }
     }
     
@@ -38,13 +57,17 @@ struct MapView: View {
             Map(position: $viewModel.position, selection: $viewModel.selection) {
                 mapAnnotations
             }
-            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(trackedCategories))))
+            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(MKPointOfInterestCategory.trackedCategories))))
             .mapControls {
                 MapUserLocationButton()
                 MapCompass()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea(.all, edges: [.leading, .trailing, .bottom])
+            .ignoresSafeArea(.all, edges: [.leading, .trailing])
+            
+            FloatingDexButton {
+                viewModel.isDexPresented = true
+            }
         }
     }
     
@@ -85,10 +108,10 @@ struct MapView: View {
                     viewModel.mark(item: item, as: .wishlist, modelContext: modelContext)
                 }
             )
-            .presentationDetents([.medium],
-                                 selection: $viewModel.sheetDetent)
+            .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
             .presentationBackgroundInteraction(.enabled)
         }
     }
 }
+

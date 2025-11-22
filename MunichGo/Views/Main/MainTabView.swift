@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @Environment(\.discoveredPolygonStore) private var store
+    @Environment(\.modelContext) private var modelContext
     
     var body: some View {
         print("🔧 MainTabView body - store exists: \(store != nil)")
@@ -36,16 +37,17 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                StatsView()
+                if let store = store {
+                    StatsView(viewModel: StatsViewModel(store: store, modelContext: modelContext))
+                } else {
+                    ProgressView("Loading stats...")
+                        .onAppear {
+                            print("⚠️ MapView waiting for store...")
+                        }
+                }
             }
             .tabItem {
                 Label("Stats", systemImage: "chart.pie")
-            }
-            NavigationStack{
-                AccountView()
-            }
-            .tabItem {
-                Label("Account", systemImage: "person")
             }
         }
     }

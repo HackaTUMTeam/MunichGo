@@ -134,7 +134,8 @@ final class DiscoveredPolygonsStore {
     
     func percentageDiscovered() -> Double {
 
-        let totalAvailable = Double(PolygonsMunich.count * 7)
+        let totalAvailable = Double(PolygonsMunich.count * 7 * 7 * 7 * 7)
+
         let userDiscovered = Double(cells.count)
         
         if totalAvailable == 0 {

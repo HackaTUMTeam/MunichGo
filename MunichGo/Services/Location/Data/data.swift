@@ -39,12 +39,6 @@ struct DistrictData {
         District(
             id: "Thalkirchen-Obersendling-Forstenried-Fürstenried-Solln",
             coordinates: [
-            CLLocationCoordinate2D(latitude: 48.074071, longitude: 11.490938)
-            ]
-        ),
-        District(
-            id: "Thalkirchen-Obersendling-Forstenried-Fürstenried-Solln",
-            coordinates: [
             CLLocationCoordinate2D(latitude: 48.106759, longitude: 11.552008),
             CLLocationCoordinate2D(latitude: 48.105712, longitude: 11.551540),
             CLLocationCoordinate2D(latitude: 48.104636, longitude: 11.550642),
@@ -408,12 +402,6 @@ struct DistrictData {
             CLLocationCoordinate2D(latitude: 48.230046, longitude: 11.537414),
             CLLocationCoordinate2D(latitude: 48.231867, longitude: 11.530545),
             CLLocationCoordinate2D(latitude: 48.234944, longitude: 11.528556)
-            ]
-        ),
-        District(
-            id: "Untergiesing-Harlaching",
-            coordinates: [
-            CLLocationCoordinate2D(latitude: 48.079412, longitude: 11.557090)
             ]
         ),
         District(
