@@ -16,8 +16,9 @@ func placeKey(for item: MKMapItem) -> String {
         .trimmingCharacters(in: .whitespacesAndNewlines)
     
     // Koordinaten ab iOS 26 nur noch über .location
-    let coord = item.location.coordinate
     
+    let coord = item.location.coordinate
+
     // leichte Rundung um Floating-Point Noise zu vermeiden
     let lat = (coord.latitude * 10_000).rounded() / 10_000
     let lon = (coord.longitude * 10_000).rounded() / 10_000

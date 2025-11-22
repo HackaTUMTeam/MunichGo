@@ -13,6 +13,13 @@ enum TransportMode: String {
 
 @Observable
 class TransportDetector {
+    var minutes_cycling = 0.0;
+    var minutes_walking = 0.0;
+    var minutes_running = 0.0;
+    var minutes_automotive = 0.0;
+    
+    var last_time: Date? = nil;
+    
     
     // MARK: - Singleton Instance
     static let shared = TransportDetector()
@@ -37,82 +44,46 @@ class TransportDetector {
         activityManager.startActivityUpdates(to: .main) { [weak self] activity in
             guard let self = self, let activity = activity else { return }
             
+            func get_time_diff(last: Date?) -> Double{
+                if last != nil{
+                    return abs( Double(Date().timeIntervalSince(last!)))
+                }
+                return 0.0
+            }
+            
             // Core Motion Logic
             if activity.automotive {
                 self.currentMode = .automotive
+                minutes_automotive += get_time_diff(last: last_time)
             } else if activity.cycling {
                 self.currentMode = .cycling
+                minutes_cycling += get_time_diff(last: last_time)
             } else if activity.running {
                 self.currentMode = .running
+                minutes_running += get_time_diff(last: last_time)
             } else if activity.walking {
                 self.currentMode = .walking
+                minutes_walking += get_time_diff(last: last_time)
             } else if activity.stationary {
                 self.currentMode = .stationary
             } else {
                 self.currentMode = .unknown
             }
+            last_time = Date();
+            
             
             print("🏃 Transport Mode: \(self.currentMode.rawValue) (Confidence: \(activity.confidence.rawValue))")
         }
+    }  
+    
+    func get_sustainability_score() -> Double{
+        var arg = minutes_cycling + minutes_running + minutes_walking - minutes_automotive;
+        return tanh(arg)/2.0 + 0.5
+        
     }
     
     func stopDetection() {
         activityManager.stopActivityUpdates()
     }
     
-    // MARK: - 2. Manual Analysis (GPS Trace)
-    // Use this if analyzing a history of points (e.g. an uploaded GPX file)
-    // or to double-check "Automotive" (e.g. Train vs Car based on max speed)
-    func analyzeTrace(points: [CLLocation]) -> TransportMode {
-        guard points.count > 1 else { return .stationary }
-        
-        var totalDistance: CLLocationDistance = 0
-        var totalTime: TimeInterval = 0
-        var maxSpeed: Double = 0
-        
-        for i in 0..<points.count - 1 {
-            let p1 = points[i]
-            let p2 = points[i+1]
-            
-            let distance = p1.distance(from: p2)
-            let timeDiff = p2.timestamp.timeIntervalSince(p1.timestamp)
-            
-            if timeDiff > 0 {
-                let speedMPS = distance / timeDiff // meters per second
-                let speedKPH = speedMPS * 3.6
-                
-                if speedKPH > maxSpeed {
-                    maxSpeed = speedKPH
-                }
-            }
-            
-            totalDistance += distance
-            totalTime += timeDiff
-        }
-        
-        let avgSpeedKPH = (totalDistance / totalTime) * 3.6
-        
-        return classifyBasedOnSpeed(avgSpeed: avgSpeedKPH, maxSpeed: maxSpeed)
-    }
-    
-    private func classifyBasedOnSpeed(avgSpeed: Double, maxSpeed: Double) -> TransportMode {
-        // Heuristics - these are rough estimates
-        switch maxSpeed {
-        case 0..<2:       return .stationary
-        case 2..<7:       return .walking // Avg walk is 5 km/h
-        case 7..<25:      return .running // Usain Bolt peaks at 44, normal run is 10-15
-        case 25..<50:     return .cycling // E-bikes cap at 25/45, pros go faster
-        case 50...:       return .automotive
-        default:          return .unknown
-        }
-    }
-    
-    // MARK: - Helper to update speed from CLLocationManager
-    func updateSpeed(from location: CLLocation) {
-        // location.speed is in m/s. Convert to km/h
-        // location.speed is -1 if invalid
-        if location.speed >= 0 {
-            self.currentSpeed = location.speed * 3.6
-        }
-    }
 }

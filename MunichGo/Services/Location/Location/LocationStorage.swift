@@ -26,6 +26,10 @@ final class LocationStorage {
         trace.append(location)
     }
     
+    func last_location() -> CLLocation?{
+        return trace.last
+    }
+    
     func getAllPoints() -> [CLLocation] {
         // Return just the locations if needed for analysis
         return trace
