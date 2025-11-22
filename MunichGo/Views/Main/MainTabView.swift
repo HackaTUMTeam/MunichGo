@@ -8,10 +8,21 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Environment(\.discoveredPolygonStore) private var store
+    
     var body: some View {
-        TabView {
+        print("🔧 MainTabView body - store exists: \(store != nil)")
+        
+        return TabView {
             NavigationStack {
-                MapView()
+                if let store = store {
+                    MapView(viewModel: MapViewModel(store: store))
+                } else {
+                    ProgressView("Loading map...")
+                        .onAppear {
+                            print("⚠️ MapView waiting for store...")
+                        }
+                }
             }
             .tabItem {
                 Label("Map", systemImage: "map")

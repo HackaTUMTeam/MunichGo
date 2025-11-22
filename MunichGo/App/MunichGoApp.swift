@@ -10,31 +10,41 @@ import SwiftData
 
 @main
 struct MunichGoApp: App {
+    
+    init() {
+        print("🚀 MunichGoApp init")
+    }
+    
     var sharedModelContainer: ModelContainer = {
+        print("🔧 Creating ModelContainer...")
         let schema = Schema([
-            Hexagon.self,
+            DiscoveredPolygon.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            print("✅ ModelContainer created successfully")
+            return container
         } catch {
+            print("❌ Fatal error creating ModelContainer: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
     
     @StateObject private var authViewModel = AuthViewModel()
     //@StateObject private var apiService = ApiService()
-    
-    init() {
-        BackgroundLocationManager.shared.startTracking()
-    }
 
     var body: some Scene {
-        WindowGroup {
+        print("🔧 Building WindowGroup scene...")
+        return WindowGroup {
             ContentView()
                 .environmentObject(authViewModel)
                 //.environmentObject(apiService)
+                .onAppear {
+                    print("✅ ContentView appeared!")
+                }
         }
         .modelContainer(sharedModelContainer)
     }

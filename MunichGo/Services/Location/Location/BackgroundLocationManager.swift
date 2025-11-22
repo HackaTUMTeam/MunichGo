@@ -6,59 +6,107 @@
 //
 
 import CoreLocation
+import Observation
+import SwiftyH3
 
-class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
-    
+@Observable
+final class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
+
     static let shared = BackgroundLocationManager()
     private let manager = CLLocationManager()
-    
-    override init() {
+
+    private var store: DiscoveredPolygonsStore?
+
+    private override init() {
         super.init()
         manager.delegate = self
-        
-        // 1. Configure Accuracy (Lower accuracy = Less Battery Drain)
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        manager.distanceFilter = 20 // Only update if moved 50 meters
-        
-    }
-    
-    func startTracking() {
-        manager.allowsBackgroundLocationUpdates = true
+        manager.distanceFilter = 20
         manager.pausesLocationUpdatesAutomatically = false
-        // 4. Request "Always" permission
-        manager.requestAlwaysAuthorization()
-        manager.startUpdatingLocation()
     }
-    
+
+    /// Einmal beim App-Start/Login aufrufen
+    func configure(store: DiscoveredPolygonsStore) {
+        self.store = store
+    }
+
+    func startTracking() {
+        manager.requestAlwaysAuthorization()
+        // Start erst nach Auth-Callback (sauber)
+    }
+
+    private func startLocationPipelines() {
+        manager.allowsBackgroundLocationUpdates = true
+        manager.startUpdatingLocation()
+
+        // Fallback für lange Background-Laufzeiten
+        manager.startMonitoringSignificantLocationChanges()
+        manager.startMonitoringVisits()
+    }
+
     func stopTracking() {
         manager.stopUpdatingLocation()
+        manager.stopMonitoringSignificantLocationChanges()
+        manager.stopMonitoringVisits()
     }
-    
-    // MARK: - Delegate Methods
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        
-        // This code runs even if the app is in the background/locked!
-        print("Background Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-        
-        updateCells(lat: location.coordinate.latitude, lng: location.coordinate.longitude)
-        
-        print("\(Cells.count) Cells visited")
-    }
-    
+
+    // MARK: - Delegate
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedAlways:
-            print("✅ Permission: Always - Background updates will work silently.")
+            startLocationPipelines()
         case .authorizedWhenInUse:
-            print("⚠️ Permission: When In Use - Background updates only work if Blue Bar is active.")
+            manager.startUpdatingLocation()
         case .denied, .restricted:
-            print("❌ Permission: Denied - No updates.")
+            stopTracking()
         case .notDetermined:
-            print("❓ Permission: Not Determined yet.")
+            break
         @unknown default:
             break
         }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let loc = locations.last else { return }
+        insertCell(for: loc)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didVisit visit: CLVisit) {
+        guard visit.departureDate != .distantFuture else { return }
+        let loc = CLLocation(latitude: visit.coordinate.latitude,
+                             longitude: visit.coordinate.longitude)
+        insertCell(for: loc)
+    }
+
+    private func insertCell(for loc: CLLocation) {
+//        guard let store else { return }   // falls configure vergessen wurde
+//        guard let cell = h3FromPos(lat: loc.coordinate.latitude,
+//                                    lng: loc.coordinate.longitude)
+//        else { return }
+//
+//        // Direkt aufrufen, kein MainActor nötig
+//        store.add(cell: cell)
+        if checkIfInMunich(for: loc) {
+            insertCells(for: loc)
+            print("In Munich")
+        } else {
+            print("Not in Munich")
+        }
+    }
+    
+    private func checkIfInMunich(for loc: CLLocation) -> Bool {
+        return loc.coordinate.latitude < Constants.MUNICH_LAT + 15 && loc.coordinate.latitude > Constants.MUNICH_LAT - 15 && loc.coordinate.longitude < Constants.MUNICH_LON + 15 && loc.coordinate.longitude > Constants.MUNICH_LON - 15
+    }
+    
+    private func insertCells(for loc: CLLocation) {
+        guard let store else { return }   // falls configure vergessen wurde
+        guard let cells = adjacentH3FromPos(lat: loc.coordinate.latitude,
+                                    lng: loc.coordinate.longitude)
+        else { return }
+
+        // Direkt aufrufen, kein MainActor nötig
+        store.add(cells: Array(cells))
     }
 }
 

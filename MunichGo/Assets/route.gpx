@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Xcode">
+  <trk>
+    <name>FastCarRoute</name>
+    <trkseg>
+      <trkpt lat="48.137154" lon="11.576124">
+        <time>2025-11-22T12:00:00Z</time>
+      </trkpt>
+      <trkpt lat="48.140000" lon="11.580500">
+        <time>2025-11-22T12:00:10Z</time>
+      </trkpt>
+      <trkpt lat="48.145000" lon="11.588000">
+        <time>2025-11-22T12:00:20Z</time>
+      </trkpt>
+      <trkpt lat="48.152000" lon="11.596500">
+        <time>2025-11-22T12:00:30Z</time>
+      </trkpt>
+      <trkpt lat="48.160500" lon="11.590000">
+        <time>2025-11-22T12:00:40Z</time>
+      </trkpt>
+      <trkpt lat="48.170000" lon="11.580000">
+        <time>2025-11-22T12:00:50Z</time>
+      </trkpt>
+      <trkpt lat="48.176900" lon="11.556300">
+        <time>2025-11-22T12:01:00Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>

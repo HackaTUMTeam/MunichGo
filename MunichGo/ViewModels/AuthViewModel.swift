@@ -20,14 +20,22 @@ class AuthViewModel: ObservableObject {
     //private let networkManager = ApiService()
     
     init() {
-        checkAuthStatus()
+        print("🔧 AuthViewModel init")
+        // Für Tests: checkAuthStatus deaktiviert
+        // checkAuthStatus()
+        print("✅ AuthViewModel init complete - isAuthenticated: \(isAuthenticated)")
     }
     
     func checkAuthStatus() {
+        print("🔧 Checking auth status...")
         // Check if user is stored locally
         if let userData = storageManager.get(key: "currentUser", as: User.self) {
             currentUser = userData
             isAuthenticated = true
+            print("✅ User found: \(userData.name)")
+        } else {
+            isAuthenticated = false
+            print("ℹ️ No user found, keeping isAuthenticated = true for testing")
         }
     }
     

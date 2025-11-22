@@ -16,6 +16,6 @@ enum Constants {
     static let CLOSE_ZOOM_LAT = 0.04
     static let CLOSE_ZOOM_LON = 0.06
     
-    static let BROAD_ZOOM_LAT = 0.16
-    static let BROAD_ZOOM_LON = 0.24
+    static let BROAD_ZOOM_LAT = 0.32
+    static let BROAD_ZOOM_LON = 0.40
 }

@@ -9,21 +9,28 @@ import SwiftUI
 import MapKit
 
 struct MapView: View {
-    @State private var viewModel = MapViewModel()
+    @State var viewModel: MapViewModel
     
     var body: some View {
         ZStack {
             Map(position: $viewModel.position, selection: $viewModel.selection) {
                 UserAnnotation()
                 
+                MapPolygon(viewModel.fogOverlay)
+                    .foregroundStyle(.gray.opacity(0.7))
+                
                 MapPolygon(viewModel.worldOverlay)
                     .foregroundStyle(.black.opacity(0.7))
+                
+                ForEach(viewModel.fadingPolygons) { fp in
+                    MapPolygon(fp.polygon)
+                        .foregroundStyle(.gray.opacity(fp.opacity))
+                }
             }
             .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(viewModel.pointsOfInterest)))
             .mapControls({
                 MapUserLocationButton()
                 MapCompass()
-                MapPitchToggle()
             })
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .ignoresSafeArea(.all, edges: [.leading, .trailing, .bottom])
@@ -44,9 +51,8 @@ struct MapView: View {
        .toolbar {
            MapToolbar(viewModel: viewModel)
        }
+       .onChange(of: viewModel.store.cells) { _, newCells in
+           viewModel.updateFromCells(newCells)
+       }
     }
-}
-
-#Preview {
-    MapView()
 }

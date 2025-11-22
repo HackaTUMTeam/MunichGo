@@ -10,20 +10,40 @@ import SwiftUI
 import MapKit
 import SwiftyH3
 
+struct FadingPolygon: Identifiable {
+    let id = UUID()
+    let polygon: MKPolygon
+    var opacity: Double = 0.7
+}
+
 @Observable
 final class MapViewModel {
     let munichCenter = CLLocationCoordinate2D(latitude: Constants.MUNICH_LAT, longitude: Constants.MUNICH_LON)
-    
     let defaultZoom = MKCoordinateSpan(latitudeDelta: Constants.ZOOM_LAT, longitudeDelta: Constants.ZOOM_LON)
-    
     let closeZoom = MKCoordinateSpan(latitudeDelta: Constants.CLOSE_ZOOM_LAT, longitudeDelta: Constants.CLOSE_ZOOM_LON)
     let broadZoom = MKCoordinateSpan(latitudeDelta: Constants.BROAD_ZOOM_LAT, longitudeDelta: Constants.BROAD_ZOOM_LON)
 
     var position: MapCameraPosition
     var selection: MapSelection<MKMapItem>? = nil
     
-    var discoveredPolygons: [MKPolygon] = []
+    let store: DiscoveredPolygonsStore
+    
+    var fogOverlay: MKPolygon = MKPolygon()
+    var fogOverlayVersion: UUID = UUID()
+    
     var worldOverlay: MKPolygon = MKPolygon()
+    private var _munichPolygons: [MKPolygon]? = nil
+    private var munichPolygons: [MKPolygon] {
+        if _munichPolygons == nil {
+            print("🔨 Generating Munich polygons (first access)...")
+            _munichPolygons = PolygonsMunich.map { polygonPromCell(from: H3Cell($0)) }
+            print("✅ Munich polygons generated: \(_munichPolygons!.count) polygons")
+        }
+        return _munichPolygons!
+    }
+    private(set) var discoveredPolygons: [MKPolygon] = []
+    
+    var fadingPolygons: [FadingPolygon] = []
     
     var selectedMapItem: MKMapItem? = nil
     var isSheetPresented: Bool = false
@@ -34,7 +54,9 @@ final class MapViewModel {
     
     var isZoomedOut = false
 
-    init() {
+    init(store: DiscoveredPolygonsStore) {
+        self.store = store
+        
         self.position = .region(
             MKCoordinateRegion(
                 center: munichCenter,
@@ -47,12 +69,105 @@ final class MapViewModel {
             greenScore = Int.random(in: 0..<101)
         }
         
-        // Test
-        for num in PolygonsMunich{
-            discoveredPolygons.append(polygonPromCell(from: H3Cell(num)))
+        // munichPolygons wird jetzt lazy geladen - erst beim ersten Zugriff
+                        
+        Task { @MainActor in
+            buildWorldOverlay()
+            updateFromCells(store.cells, animateDiffVs: [])
         }
+    }
+    
+    func updateFromCells(_ newCells: Set<H3Cell>) {
+        updateFromCells(newCells, animateDiffVs: Array(store.lastCellsSnapshot))
+        store.lastCellsSnapshot = newCells
+    }
+    
+    private func updateFromCells(_ newCells: Set<H3Cell>, animateDiffVs oldCellsArray: [H3Cell]) {
+        let oldCells = Set(oldCellsArray)
+        let newlyFound = newCells.subtracting(oldCells)
+
+        // 1) Discovered -> Polygone
+        discoveredPolygons = newCells.map { polygonPromCell(from: $0) }
+
+        // 2) Fog neu bauen
+        buildFogOverlay()
+
+        // 3) Map refresh erzwingen
+        fogOverlayVersion = UUID()
+
+        // 4) Fade-Overlays für neue Zellen
+        for cell in newlyFound {
+            let poly = polygonPromCell(from: cell)
+            let fading = FadingPolygon(polygon: poly)
+            fadingPolygons.append(fading)
+            
+            Task { @MainActor in
+                // Fade out animation - 3 Sekunden, 30 Frames = 100ms pro Frame
+                let duration: Double = 3.0 // Sekunden
+                let steps = 30
+                let delayNanoseconds = UInt64(duration * 1_000_000_000 / Double(steps))
+                
+                for i in 0...steps {
+                    let progress = Double(i) / Double(steps)
+                    let opacity = 0.7 * (1.0 - progress) // Von 0.7 bis 0.0
+                    
+                    if let index = fadingPolygons.firstIndex(where: { $0.id == fading.id }) {
+                        fadingPolygons[index].opacity = opacity
+                    }
+                    
+                    if i < steps {
+                        try? await Task.sleep(nanoseconds: delayNanoseconds)
+                    }
+                }
+                fadingPolygons.removeAll { $0.id == fading.id }
+            }
+        }
+    }
+    
+    private func buildWorldOverlay() {
+        let coords = worldCoords()
+
+        worldOverlay = MKPolygon(
+            coordinates: coords,
+            count: coords.count,
+            interiorPolygons: munichPolygons
+        )
+    }
+    
+    private func buildFogOverlay() {
+        let coords = worldCoords()
         
-        rebuildOverlay(withHoles: discoveredPolygons)
+        fogOverlay = MKPolygon(
+            coordinates: coords,
+            count: coords.count,
+            interiorPolygons: discoveredPolygons
+        )
+    }
+    
+    @MainActor
+    func rebuildFog(from cells: Set<H3Cell>) {
+        discoveredPolygons = cells.map { polygonPromCell(from: $0) }
+        buildFogOverlay()
+        fogOverlayVersion = UUID()
+    }
+    
+    private func worldCoords() -> [CLLocationCoordinate2D] {
+        let paddingLat: CLLocationDegrees = 25
+        let paddingLon: CLLocationDegrees = 90
+
+        let north = munichCenter.latitude + paddingLat
+        let south = munichCenter.latitude - paddingLat * 4
+        let east  = munichCenter.longitude + paddingLon
+        let west  = munichCenter.longitude - paddingLon
+
+        let coords = [
+            CLLocationCoordinate2D(latitude: north, longitude: west),
+            CLLocationCoordinate2D(latitude: south, longitude: west), // Go South first
+            CLLocationCoordinate2D(latitude: south, longitude: east), // Then East
+            CLLocationCoordinate2D(latitude: north, longitude: east)  // Then North
+        ]
+        
+        return coords
     }
     
     func handleFeatureSelection(_ feature: MapFeature?) {
@@ -109,31 +224,6 @@ final class MapViewModel {
         }
         
         isZoomedOut.toggle()
-    }
-    
-    func rebuildOverlay(withHoles holes: [MKPolygon]) {
-        // großer Kasten um München (gross genug, dass man nie raus scrollt)
-        // du kannst die Zahlen ruhig anpassen/erweitern
-        let paddingLat: CLLocationDegrees = 25
-        let paddingLon: CLLocationDegrees = 90
-
-        let north = munichCenter.latitude + paddingLat
-        let south = munichCenter.latitude - paddingLat * 4
-        let east  = munichCenter.longitude + paddingLon
-        let west  = munichCenter.longitude - paddingLon
-
-        let coords = [
-                CLLocationCoordinate2D(latitude: north, longitude: west),
-                CLLocationCoordinate2D(latitude: south, longitude: west), // Go South first
-                CLLocationCoordinate2D(latitude: south, longitude: east), // Then East
-                CLLocationCoordinate2D(latitude: north, longitude: east)  // Then North
-            ]
-
-        worldOverlay = MKPolygon(
-            coordinates: coords,
-            count: coords.count,
-            interiorPolygons: holes
-        )
     }
     
     var region: MKCoordinateRegion {
@@ -194,4 +284,27 @@ final class MapViewModel {
         .hospital,
         .pharmacy
     ]
+}
+
+extension MKPolygon {
+    /// Schwerpunkt (rough) vom Polygon, gut genug zum Zugehörigkeits-Test
+    var centroid: CLLocationCoordinate2D {
+        let pts = points()
+        var x: Double = 0
+        var y: Double = 0
+        for i in 0..<pointCount {
+            x += pts[i].x
+            y += pts[i].y
+        }
+        let centerPoint = MKMapPoint(x: x / Double(pointCount),
+                                     y: y / Double(pointCount))
+        return centerPoint.coordinate
+    }
+    
+    func containsCoordinate(_ coord: CLLocationCoordinate2D) -> Bool {
+        let renderer = MKPolygonRenderer(polygon: self)
+        let mapPoint = MKMapPoint(coord)
+        let point = renderer.point(for: mapPoint)
+        return renderer.path.contains(point)
+    }
 }
