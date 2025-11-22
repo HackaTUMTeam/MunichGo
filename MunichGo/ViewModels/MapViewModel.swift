@@ -94,6 +94,9 @@ final class MapViewModel {
     var isSheetPresented: Bool = false
     var sheetDetent: PresentationDetent = .medium
     
+    // New: Dex sheet presentation flag
+    var isDexPresented: Bool = false
+    
     var cityExploration: Int = 0
     var greenScore: Int = 0
     
@@ -336,3 +339,4 @@ extension MKPolygon {
         return renderer.path.contains(point)
     }
 }
+

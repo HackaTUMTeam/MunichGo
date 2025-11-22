@@ -9,7 +9,7 @@ import Foundation
 import SwiftyH3
 import MapKit
 
-func h3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res11) -> H3Cell?{
+func h3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res9) -> H3Cell?{
     
     do{
         let coordinate = H3LatLng(latitudeDegs: lat, longitudeDegs: lng)
