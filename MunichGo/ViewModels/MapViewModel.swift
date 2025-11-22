@@ -116,13 +116,6 @@ final class MapViewModel {
         self.categories = trackedCategories
         self.poiService = poiService
         self.position = .region(region)
-        
-        self.position = .region(
-            MKCoordinateRegion(
-                center: munichCenter,
-                span: defaultZoom
-            )
-        )
                 
         Task { @MainActor in
             cityExploration = Int(store.percentageDiscovered() * 100)
@@ -191,6 +184,8 @@ final class MapViewModel {
                 fadingPolygons.removeAll { $0.id == fading.id }
             }
         }
+        
+        cityExploration = Int(store.percentageDiscovered() * 100)
     }
     
     private func buildWorldOverlay() {
@@ -314,6 +309,50 @@ final class MapViewModel {
         }
         
         isZoomedOut.toggle()
+    }
+    
+    func setDiscoveredMock() {
+//        store.add(cells: Array(generateMunichH3Tiles()))
+//        print(discoveredPolygons.count)
+    }
+    
+    func generateMunichH3Tiles() -> Set<H3Cell> {
+        let center = CLLocationCoordinate2D(latitude: 48.137154, longitude: 11.576124)
+
+        // 10 × 10 Tiles = 100 Zellen
+        let rows = 30
+        let cols = 30
+
+        // In Grad (~6 km × 6 km)
+        let totalLatDelta = 0.9
+        let totalLonDelta = 0.12
+
+        let tileLat = totalLatDelta / Double(rows)
+        let tileLon = totalLonDelta / Double(cols)
+
+        var result: Set<H3Cell> = []
+
+        for r in 0..<rows {
+            for c in 0..<cols {
+
+                // Offset vom Zentrum
+                let latOffset = (Double(r) - Double(rows)/2 + 0.5) * tileLat
+                let lonOffset = (Double(c) - Double(cols)/2 + 0.5) * tileLon
+
+                // Zentrum des Tiles
+                let tileCenter = CLLocationCoordinate2D(
+                    latitude: center.latitude + latOffset,
+                    longitude: center.longitude + lonOffset
+                )
+
+                // H3 Cell berechnen
+                if let cells = adjacentH3FromPos(lat: tileCenter.latitude, lng: tileCenter.longitude) {
+                    result.formUnion(cells)
+                }
+            }
+        }
+
+        return result
     }
 }
 
