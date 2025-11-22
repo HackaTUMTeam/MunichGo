@@ -131,6 +131,20 @@ final class DiscoveredPolygonsStore {
         
         print("✅ Store erased - starting fresh")
     }
+    
+    func percentageDiscovered() -> Double {
+
+        let totalAvailable = Double(PolygonsMunich.count * 7)
+        let userDiscovered = Double(cells.count)
+        
+        if totalAvailable == 0 {
+            return 0.0
+        }
+        
+        let percentage = userDiscovered / totalAvailable
+        
+        return min(percentage, 1.0)
+    }
 }
 
 private struct DiscoveredPolygonsStoreKey: EnvironmentKey {
