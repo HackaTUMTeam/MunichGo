@@ -9,12 +9,56 @@ import Foundation
 import SwiftUI
 import MapKit
 import SwiftyH3
+import SwiftData
 
 struct FadingPolygon: Identifiable {
     let id = UUID()
     let polygon: MKPolygon
     var opacity: Double = 0.7
 }
+
+let trackedCategories: Set<MKPointOfInterestCategory> = [
+    // Essen & Trinken
+    .bakery,
+    .restaurant,
+    .cafe,
+    .foodMarket,
+
+    // Kultur & Freizeit
+    .amusementPark,
+    .aquarium,
+    .zoo,
+    .museum,
+    .theater,
+    .stadium,
+    .nightlife,
+
+    // Natur & Outdoor
+    .park,
+    .beach,
+    
+    // Sightseeing / Tourismus
+    .landmark,
+
+    // Sport & Aktivitäten
+    .fitnessCenter,
+
+    // Shopping
+    .store,
+
+    // Verkehr & Mobilität
+    .publicTransport,
+    .airport,
+
+    // Öffentliche Einrichtungen
+    .library,
+    .school,
+    .university,
+
+    // Gesundheit
+    .hospital,
+    .pharmacy
+]
 
 @Observable
 final class MapViewModel {
@@ -47,15 +91,27 @@ final class MapViewModel {
     
     var selectedMapItem: MKMapItem? = nil
     var isSheetPresented: Bool = false
-    var sheetDetent: PresentationDetent = .height(180)
+    var sheetDetent: PresentationDetent = .medium
     
     var cityExploration: Int = 0
     var greenScore: Int = 0
     
     var isZoomedOut = false
+    var showSaved = false
+    
+    let poiService: POIProgressServicing
+    let region: MKCoordinateRegion
+    let categories: Set<MKPointOfInterestCategory>
+    
+    var savedItems: [MKMapItem] = []
 
-    init(store: DiscoveredPolygonsStore) {
+    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared) {
         self.store = store
+        
+        self.region = MKCoordinateRegion(center: munichCenter, span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
+        self.categories = trackedCategories
+        self.poiService = poiService
+        self.position = .region(region)
         
         self.position = .region(
             MKCoordinateRegion(
@@ -80,6 +136,15 @@ final class MapViewModel {
     func updateFromCells(_ newCells: Set<H3Cell>) {
         updateFromCells(newCells, animateDiffVs: Array(store.lastCellsSnapshot))
         store.lastCellsSnapshot = newCells
+    }
+    
+    func reloadSaved(modelContext: ModelContext) {
+        savedItems = poiService.savedMKMapItems(modelContext: modelContext)
+    }
+
+    func mark(item: MKMapItem, as type: PlaceListType, modelContext: ModelContext) {
+        poiService.save(item, as: type, modelContext: modelContext)
+        reloadSaved(modelContext: modelContext)
     }
     
     private func updateFromCells(_ newCells: Set<H3Cell>, animateDiffVs oldCellsArray: [H3Cell]) {
@@ -225,65 +290,6 @@ final class MapViewModel {
         
         isZoomedOut.toggle()
     }
-    
-    var region: MKCoordinateRegion {
-        get {
-            if let r = position.region {
-                return r
-            }
-            // fallback
-            return MKCoordinateRegion(
-                center: munichCenter,
-                span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
-            )
-        }
-        set {
-            position = .region(newValue)
-        }
-    }
-    
-    let pointsOfInterest: [MKPointOfInterestCategory] = [
-        // Essen & Trinken
-        .bakery,
-        .restaurant,
-        .cafe,
-        .foodMarket,
-
-        // Kultur & Freizeit
-        .amusementPark,
-        .aquarium,
-        .zoo,
-        .museum,
-        .theater,
-        .stadium,
-        .nightlife,
-
-        // Natur & Outdoor
-        .park,
-        .beach,
-        
-        // Sightseeing / Tourismus
-        .landmark,
-
-        // Sport & Aktivitäten
-        .fitnessCenter,
-
-        // Shopping
-        .store,
-
-        // Verkehr & Mobilität
-        .publicTransport,
-        .airport,
-
-        // Öffentliche Einrichtungen
-        .library,
-        .school,
-        .university,
-
-        // Gesundheit
-        .hospital,
-        .pharmacy
-    ]
 }
 
 extension MKPolygon {

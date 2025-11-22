@@ -29,6 +29,21 @@ struct MapToolbar: ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Button {
                 withAnimation {
+                    viewModel.showSaved.toggle()
+                }
+            } label: {
+                if viewModel.showSaved {
+                    Image(systemName: "pin.slash.fill")
+                } else {
+                    Image(systemName: "pin.fill")
+
+                }
+            }
+        }
+        
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                withAnimation {
                     viewModel.changeZoom()
                 }
             } label: {
