@@ -17,7 +17,7 @@ struct PokedexView: View {
     
     // Adaptive grid: minimum 120pt tile width; adjusts columns automatically
     private let columns = [
-        GridItem(.adaptive(minimum: 120), spacing: 16)
+        GridItem(.adaptive(minimum: 100), spacing: 16)
     ]
     
     var body: some View {
@@ -74,7 +74,7 @@ private struct PokedexCard: View {
                             .foregroundStyle(.blue)
                     }
                 }
-                .frame(width: 100, height: 100)
+                .frame(width: 90, height: 90)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 
@@ -89,7 +89,7 @@ private struct PokedexCard: View {
                 
                 if let lat = entry.latitude, let lon = entry.longitude {
                     Text(String(format: "%.4f, %.4f", lat, lon))
-                        .font(.caption2)
+                        .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                         
                 }
