@@ -30,6 +30,12 @@ struct MainTabView: View {
             .tabItem {
                 Label("Stats", systemImage: "chart.pie")
             }
+            NavigationStack{
+                AccountView()
+            }
+            .tabItem {
+                Label("Account", systemImage: "person")
+            }
         }
     }
 }
