@@ -47,8 +47,9 @@ func getPolygnos(cells: Set<H3Cell>) -> Set<MKPolygon>{
     return polygons
 }
 
-func adjacentH3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res11) -> Set<H3Cell>?{
 
+func adjacentH3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res11) -> Set<H3Cell>?{
+    
     do{
         let coordinate = H3LatLng(latitudeDegs: lat, longitudeDegs: lng)
         let cell = try coordinate.cell(at: res)
@@ -62,3 +63,4 @@ func adjacentH3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell
 
     return nil
 }
+
