@@ -69,9 +69,10 @@ struct StatsView: View {
         }
     }
 }
-
+/*
 #Preview {
     StatsView()
         .environment(MapViewModel())
 }
+ */
 

@@ -44,7 +44,7 @@ struct MunichGoApp: App {
     }()
     
     @StateObject private var authViewModel = AuthViewModel()
-    @State var mapViewModel = MapViewModel()
+    //@State var mapViewModel = MapViewModel()
     //@StateObject private var apiService = ApiService()
 
     var body: some Scene {
@@ -52,7 +52,7 @@ struct MunichGoApp: App {
         return WindowGroup {
             ContentView()
                 .environmentObject(authViewModel)
-                .environment(mapViewModel)
+                //.environment(mapViewModel)
                 //.environmentObject(apiService)
                 .onAppear {
                     print("✅ ContentView appeared!")
