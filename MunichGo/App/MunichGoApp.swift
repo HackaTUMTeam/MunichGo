@@ -12,7 +12,7 @@ import SwiftData
 struct MunichGoApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Hexagon.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -22,10 +22,15 @@ struct MunichGoApp: App {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
+    
+    @StateObject private var authViewModel = AuthViewModel()
+    @StateObject private var apiService = ApiService()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(authViewModel)
+                .environmentObject(apiService)
         }
         .modelContainer(sharedModelContainer)
     }
