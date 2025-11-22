@@ -122,7 +122,7 @@ final class MapViewModel {
         )
                 
         Task { @MainActor in
-            cityExploration = Int.random(in: 0..<101)
+            cityExploration = Int(store.percentageDiscovered() * 100)
             greenScore = Int.random(in: 0..<101)
         }
         
