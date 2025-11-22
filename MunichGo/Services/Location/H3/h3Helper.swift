@@ -9,7 +9,7 @@ import Foundation
 import SwiftyH3
 import MapKit
 
-func h3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res9) -> H3Cell?{
+func h3FromPos(lat: Double, lng: Double, res: H3Cell.Resolution = H3Cell.Resolution.res11) -> H3Cell?{
     
     do{
         let coordinate = H3LatLng(latitudeDegs: lat, longitudeDegs: lng)
@@ -45,23 +45,4 @@ func getPolygnos(cells: Set<H3Cell>) -> Set<MKPolygon>{
     }
     
     return polygons
-}
-
-
-func runH3SanityCheck() {
-    print("\n========================================")
-    print("🧪 STARTING H3 SANITY CHECK")
-    print("========================================")
-    
-    // 1. Setup a test location (New York City)
-    let lat = 40.7831
-    let lng = -73.9712
-
-    if let cell = h3FromPos(lat: lat, lng: lng) {
-        // Code here only runs if result is NOT nil
-        print("Cell: \(cell.id)")
-    } else {
-        // Code here runs if result WAS nil
-        print("Invalid cell.")
-    }
 }

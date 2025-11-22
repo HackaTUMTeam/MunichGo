@@ -41,6 +41,12 @@ class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
         // This code runs even if the app is in the background/locked!
         print("Background Location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         
-        // TODO: Check if this location is inside your H3 Cell here
+        updateCells(lat: location.coordinate.latitude, lng: location.coordinate.longitude)
+        
+        print("\(Cells.count) Cells visited")
     }
+}
+
+func updateCells(){
+    
 }
