@@ -10,7 +10,6 @@ import MapKit
 
 struct MapView: View {
     @State private var viewModel = MapViewModel()
-    @StateObject private var locationService = LocationService()
     
     var body: some View {
         Map(position: $viewModel.position, selection: $viewModel.selection) {

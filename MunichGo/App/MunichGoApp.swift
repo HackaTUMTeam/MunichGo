@@ -10,10 +10,6 @@ import SwiftData
 
 @main
 struct MunichGoApp: App {
-    // Add this init method
-        init() {
-            BackgroundLocationManager.shared.startTracking()
-        }
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Hexagon.self,
@@ -29,6 +25,10 @@ struct MunichGoApp: App {
     
     @StateObject private var authViewModel = AuthViewModel()
     @StateObject private var apiService = ApiService()
+    
+    init() {
+        BackgroundLocationManager.shared.startTracking()
+    }
 
     var body: some Scene {
         WindowGroup {
