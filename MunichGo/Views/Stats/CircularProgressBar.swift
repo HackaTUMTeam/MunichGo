@@ -14,6 +14,8 @@ struct CircularProgressBar: View {
     var systemImageName: String
     var appendix: String
     var max: Double
+    
+    var count: Int?
 
     var body: some View {
         ZStack {
@@ -33,9 +35,17 @@ struct CircularProgressBar: View {
                 Image(systemName: systemImageName)
                     .font(.largeTitle)
                     .foregroundColor(color)
-                Text(String(format: "%.0f%@", min(self.progress, 1.0) * 100.0, appendix))
-                    .font(.title)
-                    .bold()
+                
+                if let count = count {
+                    Text(String(count))
+                        .font(.title2)
+                        .bold()
+                } else {
+                    Text(String(format: "%.0f%@", min(self.progress, 1.0) * 100.0, appendix))
+                        .font(.title2)
+                        .bold()
+                }
+                
                 Text(title)
                     .font(.headline)
             }

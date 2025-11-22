@@ -10,10 +10,35 @@ import MapKit
 import SwiftData
 import SwiftUI
 
+struct CategoryStats: Identifiable {
+    let id = UUID()
+    let category: MKPointOfInterestCategory
+    let totalCount: Int
+    let seenCount: Int
+    let coveragePercent: Double
+}
+
+struct NearbySuggestion: Identifiable {
+    let id = UUID()
+    let item: MKMapItem
+    let distance: CLLocationDistance
+    let isAlreadyVisited: Bool
+    
+    var distanceText: String {
+        if distance < 1000 {
+            return String(format: "%.0f m", distance)
+        } else {
+            return String(format: "%.1f km", distance / 1000)
+        }
+    }
+}
+
 protocol POIProgressServicing {
     var allPOIs: [MKMapItem] { get }
     var unseenPOIs: [MKMapItem] { get }
     var coveragePercent: Double { get }
+    var seenLocationsCount: Int { get }
+    var categoryStats: [CategoryStats] { get }
 
     func refreshPOIs(region: MKCoordinateRegion,
                      categories: Set<MKPointOfInterestCategory>) async
@@ -31,6 +56,10 @@ protocol POIProgressServicing {
     func savedMKMapItems(modelContext: ModelContext) -> [MKMapItem]
     
     func status(for item: MKMapItem, modelContext: ModelContext) -> PlaceListType?
+    
+    func suggestNearbyPlace(coordinate: CLLocationCoordinate2D,
+                           categories: Set<MKPointOfInterestCategory>,
+                           maxDistance: CLLocationDistance) async -> MKMapItem?
 }
 
 @Observable
@@ -41,6 +70,14 @@ final class POIProgressService: POIProgressServicing {
     private(set) var allPOIs: [MKMapItem] = []
     private(set) var unseenPOIs: [MKMapItem] = []
     private(set) var coveragePercent: Double = 0
+    private(set) var seenLocationsCount: Int = 0
+    private(set) var categoryStats: [CategoryStats] = []
+    
+    // Rate limiting properties
+    private var requestCount = 0
+    private var lastRequestResetTime = Date()
+    private let maxRequestsPerMinute = 45
+    private let requestWindow: TimeInterval = 60
 
     // optional: last scan cache key
     private var lastScanKey: String? = nil
@@ -111,12 +148,44 @@ final class POIProgressService: POIProgressServicing {
     func recomputeStats(modelContext: ModelContext) {
         let saved = (try? modelContext.fetch(FetchDescriptor<Place>())) ?? []
         let savedKeys = Set(saved.map(\.key))
-
+        
         unseenPOIs = allPOIs.filter { !savedKeys.contains(placeKey(for: $0)) }
 
         let total = allPOIs.count
-        let seen = total - unseenPOIs.count
-        coveragePercent = total == 0 ? 0 : Double(seen) / Double(total) * 100.0
+        seenLocationsCount = saved.count
+        coveragePercent = total == 0 ? 0 : Double(seenLocationsCount) / Double(total) * 100.0
+                
+        // Berechne Statistiken pro Kategorie
+        var categoryStatsDict: [String: (total: Int, seen: Int)] = [:]
+        
+//        for poi in allPOIs {
+//            let categoryKey = poi.pointOfInterestCategory?.rawValue ?? "unknown"
+//            let isSeen = savedKeys.contains(placeKey(for: poi))
+//            
+//            if categoryStatsDict[categoryKey] == nil {
+//                categoryStatsDict[categoryKey] = (total: 0, seen: 0)
+//            }
+//            
+//            categoryStatsDict[categoryKey]?.total += 1
+//            if isSeen {
+//                categoryStatsDict[categoryKey]?.seen += 1
+//            }
+//        }
+        
+        for category in MKPointOfInterestCategory.trackedCategories {
+            let categoryKey = category.rawValue
+            categoryStatsDict[categoryKey] = (total: 0, seen: 0)
+        }
+                
+        categoryStats = categoryStatsDict.map { (key, value) in
+            let coverage = value.total == 0 ? 0 : Double(value.seen) / Double(value.total) * 100.0
+            return CategoryStats(
+                category: MKPointOfInterestCategory(rawValue: key),
+                totalCount: value.total,
+                seenCount: value.seen,
+                coveragePercent: coverage
+            )
+        }.sorted { $0.category.rawValue < $1.category.rawValue }
     }
     
     func status(for item: MKMapItem, modelContext: ModelContext) -> PlaceListType? {
@@ -135,28 +204,103 @@ final class POIProgressService: POIProgressServicing {
         case .wishlist: return .wishlist
         }
     }
-}
-
-extension POIProgressService {
-
-    func scanRegionForPOIs(region: MKCoordinateRegion,
-                           categories: Set<MKPointOfInterestCategory>) async -> [MKMapItem] {
-
-        let tiles = split(region: region, rows: 6, cols: 6)
-
-        var collected: [String: MKMapItem] = [:]
-
-        for tile in tiles {
-            for cat in categories {
-                if let results = await searchPOIs(in: tile, category: cat) {
-                    for item in results {
-                        collected[placeKey(for: item)] = item
+    
+    func suggestNearbyPlace(coordinate: CLLocationCoordinate2D,
+                           categories: Set<MKPointOfInterestCategory>,
+                           maxDistance: CLLocationDistance = 50) async -> MKMapItem? {
+        
+        let userLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        
+        // Erstelle eine kleine Region um die User-Position
+        let searchRegion = MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: maxDistance * 2,
+            longitudinalMeters: maxDistance * 2
+        )
+        
+        // Live-Suche nach POIs in der Nähe
+        var nearbyPOIs: [(item: MKMapItem, distance: CLLocationDistance)] = []
+                
+        for category in categories {
+            if let results = await searchPOIs(in: searchRegion, category: category) {
+                for poi in results {
+                    let distance = userLocation.distance(from: poi.location)
+                    if distance <= maxDistance {
+                        nearbyPOIs.append((item: poi, distance: distance))
                     }
                 }
             }
         }
+        
+        // Sortiere nach Entfernung und gib den nächsten zurück
+        return nearbyPOIs
+            .sorted { $0.distance < $1.distance }
+            .first?.item
+    }
+}
 
-        return Array(collected.values)
+extension POIProgressService {
+    
+    /// Manages rate limiting for MapKit requests
+    private func throttleRequest() async {
+        let now = Date()
+        let timeSinceReset = now.timeIntervalSince(lastRequestResetTime)
+        
+        // Reset counter if window has passed
+        if timeSinceReset >= requestWindow {
+            requestCount = 0
+            lastRequestResetTime = now
+        }
+        
+        // If we've hit the limit, wait until reset
+        if requestCount >= maxRequestsPerMinute {
+            let waitTime = requestWindow - timeSinceReset
+            if waitTime > 0 {
+                try? await Task.sleep(nanoseconds: UInt64(waitTime * 1_000_000_000))
+                requestCount = 0
+                lastRequestResetTime = Date()
+            }
+        }
+        
+        requestCount += 1
+    }
+
+    func scanRegionForPOIs(region: MKCoordinateRegion,
+                           categories: Set<MKPointOfInterestCategory>) async -> [MKMapItem] {
+
+//        let tiles = split(region: region, rows: 3, cols: 3)
+//
+//        var collected: [String: MKMapItem] = [:]
+//        var requestCount = 0
+//        let maxRequestsPerMinute = 45 // Stay under 50 limit with buffer
+//        let delayNanoseconds: UInt64 = 1_200_000_000 // 1.2 seconds between requests
+//
+//        for tile in tiles {
+//            for cat in categories {
+//                // Rate limiting: add delay after every request
+//                if requestCount > 0 {
+//                    try? await Task.sleep(nanoseconds: delayNanoseconds)
+//                }
+//                
+//                if let results = await searchPOIs(in: tile, category: cat) {
+//                    for item in results {
+//                        collected[placeKey(for: item)] = item
+//                    }
+//                }
+//                
+//                requestCount += 1
+//                
+//                // Reset counter after 60 seconds worth of requests
+//                if requestCount >= maxRequestsPerMinute {
+//                    try? await Task.sleep(nanoseconds: 60_000_000_000) // Wait 60 seconds
+//                    requestCount = 0
+//                }
+//            }
+//        }
+//
+//        return Array(collected.values)
+        
+        return []
     }
 
     func searchPOIs(in region: MKCoordinateRegion,
@@ -167,7 +311,7 @@ extension POIProgressService {
             req.region = region
             req.resultTypes = .pointOfInterest
             req.pointOfInterestFilter = MKPointOfInterestFilter(including: [category])
-
+            
             MKLocalSearch(request: req).start { resp, err in
                 if err != nil { continuation.resume(returning: nil); return }
                 continuation.resume(returning: resp?.mapItems ?? [])

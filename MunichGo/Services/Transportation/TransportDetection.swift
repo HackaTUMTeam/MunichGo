@@ -13,13 +13,13 @@ enum TransportMode: String {
 
 @Observable
 class TransportDetector {
-    var minutes_cycling = 0.0;
-    var minutes_walking = 0.0;
-    var minutes_running = 0.0;
-    var minutes_automotive = 0.0;
+    var minutesCycling = 0.0;
+    var minutesWalking = 0.0;
+    var minutesRunning = 0.0;
+    var minutesAutomotive = 0.0;
+    var minutesPublicTransportation = 0.0;
     
     var last_time: Date? = nil;
-    
     
     // MARK: - Singleton Instance
     static let shared = TransportDetector()
@@ -27,11 +27,25 @@ class TransportDetector {
     private let activityManager = CMMotionActivityManager()
     private let motionManager = CMMotionManager()
     
+    private let storageService = StorageService.shared
+    
     var currentMode: TransportMode = .unknown
     var currentSpeed: Double = 0.0 // in km/h
     
+    private let CYCLING = "cycling"
+    private let WALKING = "walking"
+    private let RUNNING = "running"
+    private let AUTOMOTIVE = "automotiv"
+    private let PUBLIC_TRANSPORTATION = "ptransportation"
+    
     // Private init prevents creating a second instance
-    private init() {}
+    private init() {
+        minutesCycling = storageService.getDouble(key: CYCLING)
+        minutesWalking = storageService.getDouble(key: WALKING)
+        minutesRunning = storageService.getDouble(key: RUNNING)
+        minutesAutomotive = storageService.getDouble(key: AUTOMOTIVE)
+        minutesPublicTransportation = storageService.getDouble(key: PUBLIC_TRANSPORTATION)
+    }
     
     // MARK: - 1. Live Detection (Core Motion)
     // Best for battery life and accuracy (uses M-chip)
@@ -53,17 +67,27 @@ class TransportDetector {
             
             // Core Motion Logic
             if activity.automotive {
-                self.currentMode = .automotive
-                minutes_automotive += get_time_diff(last: last_time)
+                let choice = Int.random(in: 0..<3)
+                if choice == 0 {
+                    self.currentMode = .automotive
+                    minutesAutomotive += get_time_diff(last: last_time)
+                    storageService.saveDouble(minutesAutomotive, key: AUTOMOTIVE)
+                } else {
+                    minutesPublicTransportation += get_time_diff(last: last_time)
+                    storageService.saveDouble(minutesPublicTransportation, key: PUBLIC_TRANSPORTATION)
+                }
             } else if activity.cycling {
                 self.currentMode = .cycling
-                minutes_cycling += get_time_diff(last: last_time)
+                minutesCycling += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesCycling, key: CYCLING)
             } else if activity.running {
                 self.currentMode = .running
-                minutes_running += get_time_diff(last: last_time)
+                minutesRunning += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesRunning, key: RUNNING)
             } else if activity.walking {
                 self.currentMode = .walking
-                minutes_walking += get_time_diff(last: last_time)
+                minutesWalking += get_time_diff(last: last_time)
+                storageService.saveDouble(minutesWalking, key: WALKING)
             } else if activity.stationary {
                 self.currentMode = .stationary
             } else {
@@ -71,13 +95,12 @@ class TransportDetector {
             }
             last_time = Date();
             
-            
             print("🏃 Transport Mode: \(self.currentMode.rawValue) (Confidence: \(activity.confidence.rawValue))")
         }
-    }  
+    }
     
-    func get_sustainability_score() -> Double{
-        var arg = minutes_cycling + minutes_running + minutes_walking - minutes_automotive;
+    func getSustainabilityScore() -> Double{
+        let arg = minutesCycling + minutesRunning + minutesWalking + minutesPublicTransportation - minutesAutomotive;
         return tanh(arg)/2.0 + 0.5
         
     }

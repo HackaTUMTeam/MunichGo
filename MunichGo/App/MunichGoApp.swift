@@ -14,6 +14,7 @@ struct MunichGoApp: App {
     
     init() {
         print("🚀 MunichGoApp init")
+        TransportDetector.shared.startDetection()
     }
     
     var sharedModelContainer: ModelContainer = {
@@ -23,20 +24,7 @@ struct MunichGoApp: App {
             Place.self
         ])
 
-//        TransportDetector.shared.startDetection()
-//        //////////////////////////////////////////////////////////
-
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-        
-//        //////////////////////////////////////////////////////////
-//        let pos = CLLocationCoordinate2D(latitude: Constants.MUNICH_LAT, longitude: Constants.MUNICH_LON)
-//        let dman = DistrictManager()
-//        if let districtId = DistrictManager.getDistrictID(for: pos) {
-//            print("✅ User is in district: \(districtId)")
-//        } else {
-//            print("❌ User is outside the city districts.")
-//        }
-//        //////////////////////////////////////////////////////////
 
         do {
             let container = try ModelContainer(for: schema, configurations: [modelConfiguration])

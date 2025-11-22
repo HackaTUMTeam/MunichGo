@@ -12,10 +12,10 @@ struct CategoryBadge: View {
     let category: MKPointOfInterestCategory
     
     var body: some View {
-        Text("\(category.rawValue.replacingOccurrences(of: "MKPOICategory", with: ""))")
+        Text(category.categoryName)
             .padding(.vertical, 6)
             .padding(.horizontal, 10)
-            .background(Color.yellow)
+            .background(category.categoryColor)
             .foregroundColor(.white)
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }
