@@ -20,6 +20,7 @@ struct MunichGoApp: App {
         print("🔧 Creating ModelContainer...")
         let schema = Schema([
             DiscoveredPolygon.self,
+            Place.self
         ])
         //////////////////////////////////////////////////////////
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

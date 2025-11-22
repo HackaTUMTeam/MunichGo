@@ -9,22 +9,28 @@ import SwiftUI
 import MapKit
 
 struct PlaceSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    
     let item: MKMapItem
+    let type: PlaceListType?
+    let onVisited: () -> Void
+    let onWishlist: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let name = item.name {
                 Text(name)
-                    .font(.headline)
+                    .font(.largeTitle)
             }
-            /*
-            if let address = item.address?.shortAddress {
-                Text(address)
-            }
-             */
 
-            if let cat = item.pointOfInterestCategory {
-                CategoryBadge(category: cat)
+            HStack {
+                if let cat = item.pointOfInterestCategory {
+                    CategoryBadge(category: cat)
+                }
+                
+                if let type = type {
+                    PlaceStatusBadge(status: type)
+                }
             }
             
             Button {
@@ -32,9 +38,46 @@ struct PlaceSheet: View {
             } label: {
                 Text("Open in Maps")
             }
+            .padding(.horizontal)
+            .padding(.vertical, 10)
+            .background(.gray)
+            .foregroundStyle(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            
+            HStack {
+                if type == nil {
+                    Button {
+                        onWishlist()
+                        dismiss()
+                    } label: {
+                        Text("Speichern")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(.blue)
+                    .foregroundStyle(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                
+                if type != .visited {
+                    Button {
+                        onVisited()
+                        dismiss()
+                    } label: {
+                        Text("Besucht")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(.green)
+                    .foregroundStyle(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                }
+                
+            }
 
             Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity)
         .padding()
     }
 }
