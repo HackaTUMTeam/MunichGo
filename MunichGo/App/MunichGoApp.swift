@@ -10,6 +10,10 @@ import SwiftData
 
 @main
 struct MunichGoApp: App {
+    // Add this init method
+        init() {
+            BackgroundLocationManager.shared.startTracking()
+        }
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
