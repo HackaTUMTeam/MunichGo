@@ -19,7 +19,7 @@ struct ExploreView: View {
                 
                 
                 Text("Today's Highlights")
-                .font(Font.largeTitle.bold())
+                    .font(.title)
                 
                 SwipeableCardsView(model: model) { model in
                     print(model.swipedCards)
