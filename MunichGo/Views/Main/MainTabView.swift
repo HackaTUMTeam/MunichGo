@@ -10,20 +10,26 @@ import SwiftUI
 struct MainTabView: View {
     var body: some View {
         TabView {
-            MapView()
-                .tabItem {
-                    Label("Map", systemImage: "map")
-                }
+            NavigationStack {
+                MapView()
+            }
+            .tabItem {
+                Label("Map", systemImage: "map")
+            }
             
-            ExploreView()
-                .tabItem {
-                    Label("Explore", systemImage: "location")
-                }
+            NavigationStack {
+                ExploreView()
+            }
+            .tabItem {
+                Label("Explore", systemImage: "location")
+            }
             
-            StatsView()
-                .tabItem {
-                    Label("Stats", systemImage: "chart.pie")
-                }
+            NavigationStack {
+                StatsView()
+            }
+            .tabItem {
+                Label("Stats", systemImage: "chart.pie")
+            }
         }
     }
 }
