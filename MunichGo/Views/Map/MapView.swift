@@ -21,7 +21,10 @@ struct MapView: View {
                    onDismiss: { viewModel.clearSelection() }) {
                 placeSheetContent
             }
-            
+            // Present the real Pokédex view now
+            .sheet(isPresented: $viewModel.isDexPresented) {
+                PokedexView()
+            }
             .toolbar {
                 MapToolbar(viewModel: viewModel)
             }
@@ -39,16 +42,22 @@ struct MapView: View {
     
     @ViewBuilder
     private var mapContent: some View {
-        Map(position: $viewModel.position, selection: $viewModel.selection) {
-            mapAnnotations
+        ZStack {
+            Map(position: $viewModel.position, selection: $viewModel.selection) {
+                mapAnnotations
+            }
+            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(MKPointOfInterestCategory.trackedCategories))))
+            .mapControls {
+                MapUserLocationButton()
+                MapCompass()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .ignoresSafeArea(.all, edges: [.leading, .trailing])
+            
+            FloatingDexButton {
+                viewModel.isDexPresented = true
+            }
         }
-        .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(MKPointOfInterestCategory.trackedCategories))))
-        .mapControls {
-            MapUserLocationButton()
-            MapCompass()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .ignoresSafeArea(.all, edges: [.leading, .trailing])
     }
     
     @MapContentBuilder

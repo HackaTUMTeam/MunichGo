@@ -8,11 +8,33 @@
 import SwiftUI
 
 struct ExploreView: View {
+    
+    @EnvironmentObject var auth: AuthViewModel
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        let model = SwipeableCardsView.Model(cards: (auth.events ?? []).map({event in
+            return CardView.Model(event: event)
+        }))
+        VStack {
+                
+                
+                Text("Today's Highlights")
+                .font(Font.largeTitle.bold())
+                
+                SwipeableCardsView(model: model) { model in
+                    print(model.swipedCards)
+                    model.reset()
+                }
+            }
+            .padding()
+            .task {
+                await auth.getEvents()
+            }
+                
     }
 }
 
 #Preview {
     ExploreView()
+        .environmentObject(AuthViewModel())
 }

@@ -18,7 +18,7 @@ struct AccountView: View {
                     
                     if let text = authViewModel.events {
                         List(text){
-                            Text($0.title)
+                            Text($0.title!)
                         }
                     }
                     

@@ -76,6 +76,17 @@ struct MapToolbar: ToolbarContent {
             }
         }
         
+        // New: Pokédex button
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                withAnimation {
+                    viewModel.isDexPresented = true
+                }
+            } label: {
+                Image(systemName: "book.closed.fill") // represents a 'dex'
+            }
+            .accessibilityLabel("Open Pokédex")
+        }
     }
 }
 

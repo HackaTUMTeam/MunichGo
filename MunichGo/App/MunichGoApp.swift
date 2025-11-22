@@ -21,7 +21,8 @@ struct MunichGoApp: App {
         print("🔧 Creating ModelContainer...")
         let schema = Schema([
             DiscoveredPolygon.self,
-            Place.self
+            Place.self,
+            PokedexEntry.self // Added Pokédex model
         ])
 
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
@@ -38,16 +39,12 @@ struct MunichGoApp: App {
     }()
     
     @StateObject private var authViewModel = AuthViewModel()
-    //@State var mapViewModel = MapViewModel()
-    //@StateObject private var apiService = ApiService()
 
     var body: some Scene {
         print("🔧 Building WindowGroup scene...")
         return WindowGroup {
             ContentView()
                 .environmentObject(authViewModel)
-                //.environment(mapViewModel)
-                //.environmentObject(apiService)
                 .onAppear {
                     print("✅ ContentView appeared!")
                 }
@@ -55,3 +52,4 @@ struct MunichGoApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
+
