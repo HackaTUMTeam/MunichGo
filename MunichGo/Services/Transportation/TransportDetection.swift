@@ -19,6 +19,25 @@ class TransportDetector {
     var minutesAutomotive = 0.0;
     var minutesPublicTransportation = 0.0;
     
+    var totalMinutes: Double {
+        return minutesCycling + minutesWalking + minutesRunning + minutesAutomotive + minutesPublicTransportation
+    }
+    var cyclingPercent: Double {
+        return minutesCycling / totalMinutes
+    }
+    var walkingPercent: Double {
+        return minutesWalking / totalMinutes
+    }
+    var runningPercent: Double {
+        return minutesRunning / totalMinutes
+    }
+    var autoPercent: Double {
+        return minutesAutomotive / totalMinutes
+    }
+    var publicPercent: Double {
+        return minutesPublicTransportation / totalMinutes
+    }
+    
     var last_time: Date? = nil;
     
     // MARK: - Singleton Instance

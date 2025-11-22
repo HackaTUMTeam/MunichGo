@@ -25,17 +25,6 @@ struct MapView: View {
             .toolbar {
                 MapToolbar(viewModel: viewModel)
             }
-            .toolbar {
-                ToolbarItem(placement: .bottomBar) {
-                    if let place = viewModel.nearbyPlace {
-                        LiveLocationToolbarItem(
-                            viewModel: viewModel,
-                            place: place,
-                            modelContext: modelContext
-                        )
-                    }
-                }
-            }
             .onChange(of: viewModel.store.cells) { _, newCells in
                 viewModel.updateFromCells(newCells)
             }
