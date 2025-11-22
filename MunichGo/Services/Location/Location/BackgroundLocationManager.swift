@@ -21,7 +21,7 @@ final class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        manager.distanceFilter = 20
+        manager.distanceFilter = 10
         manager.pausesLocationUpdatesAutomatically = false
     }
 
@@ -69,6 +69,7 @@ final class BackgroundLocationManager: NSObject, CLLocationManagerDelegate {
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let loc = locations.last else { return }
+        LocationStorage.shared.add(loc)
         insertCell(for: loc)
     }
 
