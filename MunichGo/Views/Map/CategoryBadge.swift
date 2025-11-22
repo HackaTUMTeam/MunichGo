@@ -15,7 +15,7 @@ struct CategoryBadge: View {
         Text("\(category.rawValue.replacingOccurrences(of: "MKPOICategory", with: ""))")
             .padding(.vertical, 6)
             .padding(.horizontal, 10)
-            .background(Color.green)
+            .background(Color.yellow)
             .foregroundColor(.white)
             .clipShape(RoundedRectangle(cornerRadius: 8))
     }

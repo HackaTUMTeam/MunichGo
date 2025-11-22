@@ -12,6 +12,7 @@ struct PlaceSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     let item: MKMapItem
+    let type: PlaceListType?
     let onVisited: () -> Void
     let onWishlist: () -> Void
 
@@ -27,42 +28,51 @@ struct PlaceSheet: View {
                     CategoryBadge(category: cat)
                 }
                 
-                Button {
-                    item.openInMaps()
-                } label: {
-                    Text("Open in Maps")
+                if let type = type {
+                    PlaceStatusBadge(status: type)
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(.gray)
-                .foregroundStyle(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             
+            Button {
+                item.openInMaps()
+            } label: {
+                Text("Open in Maps")
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 10)
+            .background(.gray)
+            .foregroundStyle(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            
             HStack {
-                Button {
-                    onWishlist()
-                    dismiss()
-                } label: {
-                    Text("Speichern")
+                if type == nil {
+                    Button {
+                        onWishlist()
+                        dismiss()
+                    } label: {
+                        Text("Speichern")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(.blue)
+                    .foregroundStyle(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(.blue)
-                .foregroundStyle(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
                 
-                Button {
-                    onVisited()
-                    dismiss()
-                } label: {
-                    Text("Besucht")
+                if type != .visited {
+                    Button {
+                        onVisited()
+                        dismiss()
+                    } label: {
+                        Text("Besucht")
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 10)
+                    .background(.green)
+                    .foregroundStyle(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 10)
-                .background(.green)
-                .foregroundStyle(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                
             }
 
             Spacer(minLength: 0)

@@ -15,7 +15,24 @@ struct MapView: View {
     var body: some View {
         mapContent
             .onChange(of: viewModel.selection) { _, newValue in
-                viewModel.handleFeatureSelection(newValue?.feature)
+                guard let selection = newValue else {
+                    viewModel.clearSelection()
+                    return
+                }
+                
+                // Debug: Schaue was die selection enthält
+                print("Selection: \(selection)")
+                
+                // Wenn ein MapFeature vorhanden ist, wurde ein POI geklickt
+                if let feature = selection.feature {
+                    viewModel.handleFeatureSelection(feature)
+                } else {
+                    // Kein Feature = Marker wurde geklickt
+                    // Finde das entsprechende MKMapItem in savedItems
+                    // Da selection bereits einen Tag hat, ist es bereits das richtige Item
+                    viewModel.selectedMapItem = viewModel.savedItems.first
+                    viewModel.isSheetPresented = true
+                }
             }
             .sheet(isPresented: $viewModel.isSheetPresented,
                    onDismiss: { viewModel.clearSelection() }) {
@@ -66,6 +83,7 @@ struct MapView: View {
         if viewModel.showSaved {
             ForEach(viewModel.savedItems, id: \.self) { item in
                 Marker(item.name ?? "", coordinate: item.location.coordinate)
+                    .tag(MapSelection(item))
             }
         }
     }
@@ -75,13 +93,12 @@ struct MapView: View {
         if let item = viewModel.selectedMapItem {
             PlaceSheet(
                 item: item,
-                onVisited: { 
+                type: viewModel.poiService.status(for: item, modelContext: modelContext),
+                onVisited: {
                     viewModel.mark(item: item, as: .visited, modelContext: modelContext)
-//                    viewModel.reloadSaved(modelContext: modelContext)
                 },
                 onWishlist: { 
                     viewModel.mark(item: item, as: .wishlist, modelContext: modelContext)
-//                    viewModel.reloadSaved(modelContext: modelContext)
                 }
             )
             .presentationDetents([.medium],

@@ -261,6 +261,12 @@ final class MapViewModel {
         selectedMapItem = nil
         isSheetPresented = false
     }
+    
+    func handleSavedMarkerTap(_ item: MKMapItem) {
+        selectedMapItem = item
+        isSheetPresented = true
+        sheetDetent = .medium
+    }
 
     func resetToMunich() {
         position = .region(

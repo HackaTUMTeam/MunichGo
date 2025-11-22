@@ -25,6 +25,8 @@ protocol POIProgressServicing {
     func recomputeStats(modelContext: ModelContext)
     
     func savedMKMapItems(modelContext: ModelContext) -> [MKMapItem]
+    
+    func status(for item: MKMapItem, modelContext: ModelContext) -> PlaceListType?
 }
 
 @Observable
@@ -94,6 +96,23 @@ final class POIProgressService: POIProgressServicing {
         let total = allPOIs.count
         let seen = total - unseenPOIs.count
         coveragePercent = total == 0 ? 0 : Double(seen) / Double(total) * 100.0
+    }
+    
+    func status(for item: MKMapItem, modelContext: ModelContext) -> PlaceListType? {
+        let key = placeKey(for: item)
+
+        let descriptor = FetchDescriptor<Place>(
+            predicate: #Predicate { $0.key == key }
+        )
+
+        guard let saved = try? modelContext.fetch(descriptor).first else {
+            return nil
+        }
+
+        switch saved.listType {
+        case .visited:  return .visited
+        case .wishlist: return .wishlist
+        }
     }
 }
 
