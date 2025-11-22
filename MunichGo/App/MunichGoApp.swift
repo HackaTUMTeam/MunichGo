@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
 
 @main
 struct MunichGoApp: App {
@@ -14,7 +15,16 @@ struct MunichGoApp: App {
         let schema = Schema([
             Hexagon.self,
         ])
+        //////////////////////////////////////////////////////////
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let pos = CLLocationCoordinate2D(latitude: Constants.MUNICH_LAT, longitude: Constants.MUNICH_LON)
+        let dman = DistrictManager()
+        if let districtId = DistrictManager.getDistrictID(for: pos) {
+            print("✅ User is in district: \(districtId)")
+        } else {
+            print("❌ User is outside the city districts.")
+        }
+        //////////////////////////////////////////////////////////
 
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
@@ -24,6 +34,7 @@ struct MunichGoApp: App {
     }()
     
     @StateObject private var authViewModel = AuthViewModel()
+    @State var mapViewModel = MapViewModel()
     //@StateObject private var apiService = ApiService()
     
     init() {
@@ -34,6 +45,7 @@ struct MunichGoApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authViewModel)
+                .environment(mapViewModel)
                 //.environmentObject(apiService)
         }
         .modelContainer(sharedModelContainer)
