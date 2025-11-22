@@ -37,7 +37,6 @@ struct BadgeView: View {
                     Image(systemName: badge.icon)
                         .font(.system(size: 26, weight: .regular))
                         .foregroundColor(.gray.opacity(0.4))
-                        .lineLimit(1)
 
                     Image(systemName: badge.icon)
                         .font(.system(size: 26, weight: .regular))
@@ -59,7 +58,7 @@ struct BadgeView: View {
             Text(badge.name)
                 .font(.caption)
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
+                .lineLimit(1)
                 .frame(maxWidth: .infinity)
 
             // Level pill

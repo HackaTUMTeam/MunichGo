@@ -75,4 +75,14 @@ class StorageService {
     func getInt(key: String) -> Int {
         return userDefaults.integer(forKey: key)
     }
+    
+    // MARK: - Double Values
+    
+    func saveDouble(_ value: Double, key: String) {
+        userDefaults.set(value, forKey: key)
+    }
+    
+    func getDouble(key: String) -> Double {
+        return userDefaults.double(forKey: key)
+    }
 }

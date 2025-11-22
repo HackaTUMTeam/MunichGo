@@ -28,15 +28,26 @@ struct MapView: View {
             .toolbar {
                 MapToolbar(viewModel: viewModel)
             }
+            .toolbar {
+                ToolbarItem(placement: .bottomBar) {
+                    if let place = viewModel.nearbyPlace {
+                        LiveLocationToolbarItem(
+                            viewModel: viewModel,
+                            place: place,
+                            modelContext: modelContext
+                        )
+                    }
+                }
+            }
             .onChange(of: viewModel.store.cells) { _, newCells in
                 viewModel.updateFromCells(newCells)
             }
             .task {
                 viewModel.reloadSaved(modelContext: modelContext)
-                
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                
-                viewModel.setDiscoveredMock()
+                viewModel.startLocationTracking()
+            }
+            .onDisappear {
+                viewModel.stopLocationTracking()
             }
     }
     
@@ -46,7 +57,7 @@ struct MapView: View {
             Map(position: $viewModel.position, selection: $viewModel.selection) {
                 mapAnnotations
             }
-            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(trackedCategories))))
+            .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(Array(MKPointOfInterestCategory.trackedCategories))))
             .mapControls {
                 MapUserLocationButton()
                 MapCompass()
@@ -97,8 +108,7 @@ struct MapView: View {
                     viewModel.mark(item: item, as: .wishlist, modelContext: modelContext)
                 }
             )
-            .presentationDetents([.medium],
-                                 selection: $viewModel.sheetDetent)
+            .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
             .presentationBackgroundInteraction(.enabled)
         }

@@ -41,52 +41,54 @@ struct PlaceSheet: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    Divider()
-                    
-                    // Adresse und Details
-                    VStack(alignment: .leading, spacing: 12) {
-                        // Address information
-                        if let address = item.address {
-                            Label {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    // Use the formatted address string
-                                    if let formattedAddress = address.shortAddress {
-                                        Text(formattedAddress)
-                                            .font(.body)
+                    if item.address != nil {
+                        Divider()
+                        
+                        // Adresse und Details
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Address information
+                            if let address = item.address {
+                                Label {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        // Use the formatted address string
+                                        if let formattedAddress = address.shortAddress {
+                                            Text(formattedAddress)
+                                                .font(.body)
+                                        }
                                     }
+                                } icon: {
+                                    Image(systemName: "mappin.circle.fill")
+                                        .foregroundStyle(.red)
+                                        .font(.title2)
                                 }
-                            } icon: {
-                                Image(systemName: "mappin.circle.fill")
-                                    .foregroundStyle(.red)
-                                    .font(.title2)
+                            }
+                            
+                            if let phoneNumber = item.phoneNumber {
+                                Label {
+                                    Text(phoneNumber)
+                                        .font(.body)
+                                } icon: {
+                                    Image(systemName: "phone.fill")
+                                        .foregroundStyle(.green)
+                                        .font(.title3)
+                                }
+                            }
+                            
+                            if let url = item.url {
+                                Label {
+                                    Text(url.absoluteString)
+                                        .font(.body)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                } icon: {
+                                    Image(systemName: "globe")
+                                        .foregroundStyle(.blue)
+                                        .font(.title3)
+                                }
                             }
                         }
-                        
-                        if let phoneNumber = item.phoneNumber {
-                            Label {
-                                Text(phoneNumber)
-                                    .font(.body)
-                            } icon: {
-                                Image(systemName: "phone.fill")
-                                    .foregroundStyle(.green)
-                                    .font(.title3)
-                            }
-                        }
-                        
-                        if let url = item.url {
-                            Label {
-                                Text(url.absoluteString)
-                                    .font(.body)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            } icon: {
-                                Image(systemName: "globe")
-                                    .foregroundStyle(.blue)
-                                    .font(.title3)
-                            }
-                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Divider()
                     
@@ -157,8 +159,6 @@ struct PlaceSheet: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .symbolRenderingMode(.hierarchical)
-                            .foregroundStyle(.secondary)
                             .font(.title2)
                     }
                 }

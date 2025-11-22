@@ -17,9 +17,13 @@ final class StatsViewModel {
     
     let store: DiscoveredPolygonsStore
     let poiService: POIProgressServicing
+    let transportDetection: TransportDetector
     
-    var cityExploration: Int = 0
-    var greenScore: Int = 0
+    var cityExploration: Double = 0
+    var locationCount: Int = 0
+    var locationPercentage: Double = 0
+    var greenScore: Double = 0
+    var categoryStats: [CategoryStats] = []
     
     let region: MKCoordinateRegion
     let categories: Set<MKPointOfInterestCategory>
@@ -27,7 +31,9 @@ final class StatsViewModel {
     var savedItems: [MKMapItem] = []
     
     // 1. Define the grid layout: 4 columns
-    let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
+    let columns = Array(repeating: GridItem(.flexible(), spacing: 20), count: 4)
+    
+    let modelContext: ModelContext
     
     // Mock badges
     let badges: [Badge] = [
@@ -40,16 +46,34 @@ final class StatsViewModel {
         Badge(name: "Cyclist", icon: "bicycle", description: "Ride 20km", unlocked: false, level: 0, maxLevel: 10)
     ]
 
-    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared) {
+    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared, transportDetection: TransportDetector = TransportDetector.shared, modelContext: ModelContext) {
         self.store = store
+        self.transportDetection = transportDetection
+        self.modelContext = modelContext
         
         self.region = MKCoordinateRegion(center: munichCenter, span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
-        self.categories = trackedCategories
+        self.categories = MKPointOfInterestCategory.trackedCategories
         self.poiService = poiService
                 
         Task { @MainActor in
-            cityExploration = Int(store.percentageDiscovered() * 100)
-            greenScore = Int.random(in: 0..<101)
+            await self.poiService.refreshPOIs(region: region, categories: categories)
+            self.poiService.recomputeStats(modelContext: modelContext)
+            
+            cityExploration = store.percentageDiscovered()
+            greenScore = transportDetection.getSustainabilityScore()
+            locationCount = poiService.seenLocationsCount
+            locationPercentage = poiService.coveragePercent
+            categoryStats = poiService.categoryStats
         }
+    }
+    
+    func reloadStats() {
+        self.poiService.recomputeStats(modelContext: modelContext)
+        
+        cityExploration = store.percentageDiscovered()
+        greenScore = transportDetection.getSustainabilityScore()
+        locationCount = poiService.seenLocationsCount
+        locationPercentage = poiService.coveragePercent
+        categoryStats = poiService.categoryStats
     }
 }

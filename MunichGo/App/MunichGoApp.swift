@@ -14,6 +14,7 @@ struct MunichGoApp: App {
     
     init() {
         print("🚀 MunichGoApp init")
+        TransportDetector.shared.startDetection()
     }
     
     var sharedModelContainer: ModelContainer = {

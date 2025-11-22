@@ -32,7 +32,7 @@ enum PokedexSeeder {
         
         
         
-        let sights = poiService.searchPOIs(in: <#T##MKCoordinateRegion#>, category: .landmark)
+        // let sights = poiService.searchPOIs(in: MKCoordinateRegion, category: .landmark)
         
         for sight in sights {
             let entry = PokedexEntry(
