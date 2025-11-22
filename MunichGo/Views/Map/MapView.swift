@@ -17,7 +17,7 @@ struct MapView: View {
                 UserAnnotation()
                 
                 MapPolygon(viewModel.worldOverlay)
-                    .foregroundStyle(.gray.opacity(0.7))
+                    .foregroundStyle(.black.opacity(0.7))
             }
             .mapStyle(.hybrid(elevation: .realistic, pointsOfInterest: .including(viewModel.pointsOfInterest)))
             .mapControls({

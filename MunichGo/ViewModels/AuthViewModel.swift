@@ -17,7 +17,7 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private let storageManager = StorageService.shared
-    private let networkManager = ApiService()
+    //private let networkManager = ApiService()
     
     init() {
         checkAuthStatus()

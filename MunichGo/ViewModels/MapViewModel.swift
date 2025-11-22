@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import MapKit
+import SwiftyH3
 
 @Observable
 final class MapViewModel {
@@ -47,7 +48,9 @@ final class MapViewModel {
         }
         
         // Test
-        discoveredPolygons.append(polygonPromCell(from: h3FromPos(lat: Constants.MUNICH_LAT, lng: Constants.MUNICH_LON)!))
+        for num in PolygonsMunich{
+            discoveredPolygons.append(polygonPromCell(from: H3Cell(num)))
+        }
         
         rebuildOverlay(withHoles: discoveredPolygons)
     }
@@ -120,11 +123,11 @@ final class MapViewModel {
         let west  = munichCenter.longitude - paddingLon
 
         let coords = [
-            CLLocationCoordinate2D(latitude: north, longitude: west),
-            CLLocationCoordinate2D(latitude: north, longitude: east),
-            CLLocationCoordinate2D(latitude: south, longitude: east),
-            CLLocationCoordinate2D(latitude: south, longitude: west),
-        ]
+                CLLocationCoordinate2D(latitude: north, longitude: west),
+                CLLocationCoordinate2D(latitude: south, longitude: west), // Go South first
+                CLLocationCoordinate2D(latitude: south, longitude: east), // Then East
+                CLLocationCoordinate2D(latitude: north, longitude: east)  // Then North
+            ]
 
         worldOverlay = MKPolygon(
             coordinates: coords,

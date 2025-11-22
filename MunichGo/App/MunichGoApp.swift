@@ -24,7 +24,7 @@ struct MunichGoApp: App {
     }()
     
     @StateObject private var authViewModel = AuthViewModel()
-    @StateObject private var apiService = ApiService()
+    //@StateObject private var apiService = ApiService()
     
     init() {
         BackgroundLocationManager.shared.startTracking()
@@ -34,7 +34,7 @@ struct MunichGoApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(authViewModel)
-                .environmentObject(apiService)
+                //.environmentObject(apiService)
         }
         .modelContainer(sharedModelContainer)
     }
