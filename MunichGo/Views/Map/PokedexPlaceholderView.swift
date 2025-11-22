@@ -16,7 +16,7 @@ struct PokedexPlaceholderView: View {
                 Image(systemName: "book.closed.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.blue)
-                Text("Pokédex")
+                Text("Münchidex")
                     .font(.largeTitle).bold()
                 Text("This is a placeholder. Replace with your real Pokédex view.")
                     .multilineTextAlignment(.center)
