@@ -36,7 +36,14 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                StatsView()
+                if let store = store {
+                    StatsView(viewModel: StatsViewModel(store: store))
+                } else {
+                    ProgressView("Loading stats...")
+                        .onAppear {
+                            print("⚠️ MapView waiting for store...")
+                        }
+                }
             }
             .tabItem {
                 Label("Stats", systemImage: "chart.pie")

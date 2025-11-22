@@ -29,6 +29,10 @@ struct MapView: View {
             }
             .task {
                 viewModel.reloadSaved(modelContext: modelContext)
+                
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                
+                viewModel.setDiscoveredMock()
             }
     }
     
@@ -44,7 +48,7 @@ struct MapView: View {
                 MapCompass()
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .ignoresSafeArea(.all, edges: [.leading, .trailing, .bottom])
+            .ignoresSafeArea(.all, edges: [.leading, .trailing])
         }
     }
     

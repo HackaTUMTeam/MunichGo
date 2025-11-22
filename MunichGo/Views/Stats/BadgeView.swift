@@ -37,6 +37,7 @@ struct BadgeView: View {
                     Image(systemName: badge.icon)
                         .font(.system(size: 26, weight: .regular))
                         .foregroundColor(.gray.opacity(0.4))
+                        .lineLimit(1)
 
                     Image(systemName: badge.icon)
                         .font(.system(size: 26, weight: .regular))

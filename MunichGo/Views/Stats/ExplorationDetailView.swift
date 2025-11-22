@@ -1,0 +1,16 @@
+//
+//  ExplorationDetailView.swift
+//  MunichGo
+//
+//  Created by Felix Haag on 22.11.25.
+//
+
+import SwiftUI
+
+struct ExplorationDetailView: View {
+    @State var viewModel: StatsViewModel
+    
+    var body: some View {
+        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+    }
+}
