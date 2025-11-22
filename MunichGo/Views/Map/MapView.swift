@@ -21,6 +21,7 @@ struct MapView: View {
                    onDismiss: { viewModel.clearSelection() }) {
                 placeSheetContent
             }
+            
             .toolbar {
                 MapToolbar(viewModel: viewModel)
             }

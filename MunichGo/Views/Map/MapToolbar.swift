@@ -73,5 +73,7 @@ struct MapToolbar: ToolbarContent {
                 Image(systemName: "arrow.counterclockwise")
             }
         }
+        
     }
 }
+
