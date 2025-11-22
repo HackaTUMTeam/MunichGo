@@ -67,7 +67,6 @@ class APIClient {
             throw APIError.serverError(statusCode: httpResponse.statusCode)
         }
         
-        print(String(data:data, encoding: .utf8))
         
         // Handle empty response for 204 No Content
         if httpResponse.statusCode == 204 || data.isEmpty {

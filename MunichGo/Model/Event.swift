@@ -9,27 +9,26 @@ import Foundation
 
 struct Event:Codable, Identifiable{
     let id:String
-    let title:String
+    let title:String?
     let startDate:Date
     let endDate:Date?
-    let location:Location
-    let venue:String
+    let location:Location?
+    let venue:String?
     let type:String?
+    let reference:URL?
+    let imageReference:URL?
     
-    init(id: String, title: String, startDate: String, endDate: String, location: Location, venue: String, type:String?) {
-        
-        let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "de_DE")
-        dateFormatter.dateFormat = Constants.DATE_FORMAT
-        
+    init(id: String = UUID().uuidString, title: String?, startDate: Date=Date(), endDate:Date=Date(), location: Location?=nil, venue: String?, type:String?, reference:URL?, imageReference:URL?) {
         
         self.id = id
         self.title = title
-        self.startDate = dateFormatter.date(from: startDate)!
-        self.endDate = dateFormatter.date(from: endDate)!
+        self.startDate = startDate
+        self.endDate = endDate
         self.location = location
         self.venue = venue
         self.type = type
+        self.reference = reference
+        self.imageReference = imageReference ?? URL(string: "https://placehold.co/500x900")!
     }
 }
 
