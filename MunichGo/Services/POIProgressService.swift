@@ -21,6 +21,10 @@ protocol POIProgressServicing {
     func save(_ item: MKMapItem,
               as listType: PlaceListType,
               modelContext: ModelContext)
+    
+    func updateListType(for item: MKMapItem,
+                        to newListType: PlaceListType,
+                        modelContext: ModelContext) -> Bool
 
     func recomputeStats(modelContext: ModelContext)
     
@@ -85,6 +89,23 @@ final class POIProgressService: POIProgressServicing {
             listType: listType
         )
         modelContext.insert(sp)
+    }
+    
+    func updateListType(for item: MKMapItem,
+                        to newListType: PlaceListType,
+                        modelContext: ModelContext) -> Bool {
+        
+        let key = placeKey(for: item)
+        let descriptor = FetchDescriptor<Place>(
+            predicate: #Predicate { $0.key == key }
+        )
+        
+        guard let existing = try? modelContext.fetch(descriptor).first else {
+            return false
+        }
+        
+        existing.listType = newListType
+        return true
     }
 
     func recomputeStats(modelContext: ModelContext) {

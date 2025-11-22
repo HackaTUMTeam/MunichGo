@@ -15,8 +15,10 @@ class AuthViewModel: ObservableObject {
     @Published var isAuthenticated = true
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var events: [Event]?
     
     private let storageManager = StorageService.shared
+    private let apiClient = APIClient.shared
     //private let networkManager = ApiService()
     
     init() {
@@ -24,6 +26,13 @@ class AuthViewModel: ObservableObject {
         // Für Tests: checkAuthStatus deaktiviert
         // checkAuthStatus()
         print("✅ AuthViewModel init complete - isAuthenticated: \(isAuthenticated)")
+    }
+    
+    func getEvents() async {
+        isLoading = true
+        defer { isLoading = false }
+        events = await apiClient.getEvents()
+        
     }
     
     func checkAuthStatus() {

@@ -15,24 +15,7 @@ struct MapView: View {
     var body: some View {
         mapContent
             .onChange(of: viewModel.selection) { _, newValue in
-                guard let selection = newValue else {
-                    viewModel.clearSelection()
-                    return
-                }
-                
-                // Debug: Schaue was die selection enthält
-                print("Selection: \(selection)")
-                
-                // Wenn ein MapFeature vorhanden ist, wurde ein POI geklickt
-                if let feature = selection.feature {
-                    viewModel.handleFeatureSelection(feature)
-                } else {
-                    // Kein Feature = Marker wurde geklickt
-                    // Finde das entsprechende MKMapItem in savedItems
-                    // Da selection bereits einen Tag hat, ist es bereits das richtige Item
-                    viewModel.selectedMapItem = viewModel.savedItems.first
-                    viewModel.isSheetPresented = true
-                }
+                viewModel.handleSelection(newValue)
             }
             .sheet(isPresented: $viewModel.isSheetPresented,
                    onDismiss: { viewModel.clearSelection() }) {
@@ -83,6 +66,7 @@ struct MapView: View {
         if viewModel.showSaved {
             ForEach(viewModel.savedItems, id: \.self) { item in
                 Marker(item.name ?? "", coordinate: item.location.coordinate)
+                    .tint(viewModel.poiService.status(for: item, modelContext: modelContext) == PlaceListType.visited ? .green : .blue)
                     .tag(MapSelection(item))
             }
         }

@@ -22,9 +22,13 @@ struct MunichGoApp: App {
             DiscoveredPolygon.self,
             Place.self
         ])
+
         TransportDetector.shared.startDetection()
         //////////////////////////////////////////////////////////
+
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        
+        //////////////////////////////////////////////////////////
         let pos = CLLocationCoordinate2D(latitude: Constants.MUNICH_LAT, longitude: Constants.MUNICH_LON)
         let dman = DistrictManager()
         if let districtId = DistrictManager.getDistrictID(for: pos) {

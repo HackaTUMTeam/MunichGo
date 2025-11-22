@@ -74,7 +74,7 @@ class TransportDetector {
             
             print("🏃 Transport Mode: \(self.currentMode.rawValue) (Confidence: \(activity.confidence.rawValue))")
         }
-    }
+    }  
     
     func get_sustainability_score() -> Double{
         var arg = minutes_cycling + minutes_running + minutes_walking - minutes_automotive;
