@@ -25,7 +25,7 @@ final class DiscoveredPolygonsStore {
     var lastCellsSnapshot: Set<H3Cell> = []
 
     // MARK: - Init
-    init(context: ModelContext, eraseOnStartup: Bool = true) {
+    init(context: ModelContext, eraseOnStartup: Bool = false) {
         print("🔧 DiscoveredPolygonsStore init started")
         self.context = context
         

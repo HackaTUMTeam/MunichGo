@@ -23,7 +23,7 @@ struct FloatingDexButton: View {
                     HStack(spacing: 8) {
                         Image(systemName: "book.closed.fill")
                             .font(.headline)
-                        Text("Dex")
+                        Text("Munidex")
                             .font(.headline)
                             .bold()
                     }
