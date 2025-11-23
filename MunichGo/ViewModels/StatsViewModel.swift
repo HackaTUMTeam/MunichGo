@@ -18,6 +18,7 @@ final class StatsViewModel {
     let store: DiscoveredPolygonsStore
     let poiService: POIProgressServicing
     let transportDetection: TransportDetector
+    let districtDetector: DistrictDetector
     
     var cityExploration: Double = 0
     var locationCount: Int = 0
@@ -46,9 +47,10 @@ final class StatsViewModel {
         Badge(name: "Cyclist", icon: "bicycle", description: "Ride 20km", unlocked: false, level: 0, maxLevel: 10)
     ]
 
-    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared, transportDetection: TransportDetector = TransportDetector.shared, modelContext: ModelContext) {
+    init(store: DiscoveredPolygonsStore, poiService: POIProgressServicing = POIProgressService.shared, transportDetection: TransportDetector = TransportDetector.shared, districtDetector: DistrictDetector = DistrictDetector.shared, modelContext: ModelContext) {
         self.store = store
         self.transportDetection = transportDetection
+        self.districtDetector = districtDetector
         self.modelContext = modelContext
         
         self.region = MKCoordinateRegion(center: munichCenter, span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))

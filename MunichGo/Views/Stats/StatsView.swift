@@ -51,7 +51,7 @@ struct StatsView: View {
                     }
                     .buttonStyle(.plain)
                     
-                    CircularProgressBar(progress: 1.0/3.0, color: .purple, title: "Friend Rank", systemImageName: "person.2.fill", appendix: "", max: 1.0)
+                    CircularProgressBar(progress: 1.0/3.0, color: .purple, title: "Ranking", systemImageName: "person.2.fill", appendix: "", max: 1.0)
                         .frame(width: 150, height: 150).padding(.horizontal, 5)
                 }
                 .padding(.vertical, 5).padding(.bottom, 25)

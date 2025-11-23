@@ -17,6 +17,7 @@ struct MapToolbar: ToolbarContent {
                 ExplorationDetailView(viewModel: StatsViewModel(store: viewModel.store, modelContext: modelContext))
             } label: {
                 Text("\(viewModel.cityExploration) %")
+                    .bold()
                     .frame(width: 60)
             }
         }
@@ -29,6 +30,7 @@ struct MapToolbar: ToolbarContent {
                     Image(systemName: "leaf.fill")
                     
                     Text("\(viewModel.greenScore)")
+                        .bold()
                 }
                 .foregroundStyle(.green)
                 .frame(width: 70)

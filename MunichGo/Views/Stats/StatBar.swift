@@ -11,6 +11,20 @@ struct StatBar: View {
     let title: String
     let value: Double   // 0.0 – 1.0
     let color: Color
+    
+    /// Normalisierter Wert zwischen 0 und 1
+    private var normalizedValue: Double {
+        // Behandle ungültige Werte
+        guard value.isFinite else { return 0 }
+        
+        // Wenn Wert > 1, interpretiere als Prozent (0-100) und konvertiere
+        if value > 1.0 {
+            return min(max(value / 100.0, 0), 1)
+        }
+        
+        // Ansonsten direkt verwenden, aber auf 0-1 begrenzen
+        return min(max(value, 0), 1)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -24,7 +38,7 @@ struct StatBar: View {
 
                     RoundedRectangle(cornerRadius: 8)
                         .fill(color)
-                        .frame(width: geo.size.width * value)
+                        .frame(width: max(geo.size.width * normalizedValue, 0))
                 }
             }
             .frame(height: 12)

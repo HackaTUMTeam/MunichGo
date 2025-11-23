@@ -17,7 +17,7 @@ struct PokedexView: View {
     
     // Adaptive grid: minimum 120pt tile width; adjusts columns automatically
     private let columns = [
-        GridItem(.adaptive(minimum: 120), spacing: 16)
+        GridItem(.adaptive(minimum: 100), spacing: 16)
     ]
     
     var body: some View {
@@ -35,13 +35,13 @@ struct PokedexView: View {
             .task {
                 PokedexSeeder.seedIfNeeded(modelContext: modelContext)
             }
-            .navigationTitle("Pokédex")
+            .navigationTitle("Munidex")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
+                        Image(systemName: "xmark")
                             .symbolRenderingMode(.hierarchical)
                             .font(.title2)
                     }
@@ -58,15 +58,25 @@ private struct PokedexCard: View {
     var body: some View {
         ZStack {
             VStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(.ultraThinMaterial)
-                        .frame(height: 90)
-                    
-                    Image(systemName: entry.symbolName ?? "book.closed.fill")
-                        .font(.system(size: 32, weight: .semibold))
-                        .foregroundStyle(.blue)
+                Group {
+                    if let symbolName = entry.symbolName, let url = URL(string: symbolName) {
+                        AsyncImage(url: url) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            ProgressView()
+                                .frame(width: 32, height: 32)
+                        }
+                    } else {
+                        Image(systemName: "book.closed.fill")
+                            .font(.system(size: 32, weight: .semibold))
+                            .foregroundStyle(.blue)
+                    }
                 }
+                .frame(width: 90, height: 90)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 
                 Text(entry.displayName ?? entry.districtId)
                     .font(.headline)
@@ -79,7 +89,7 @@ private struct PokedexCard: View {
                 
                 if let lat = entry.latitude, let lon = entry.longitude {
                     Text(String(format: "%.4f, %.4f", lat, lon))
-                        .font(.caption2)
+                        .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                         
                 }
@@ -100,14 +110,13 @@ private struct PokedexCard: View {
             if !(entry.discovered) {
                 // Lock overlay with subtle glass effect
                 ZStack {
-                    // Semi-transparent background
-                    Rectangle()
-                        .fill(.ultraThinMaterial).opacity(0.93)
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial).opacity(0.96)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
-                    // Lock content
-                    
-                    
+                    Image(systemName: "questionmark")
+                        .font(.system(size: 50, weight: .semibold))
+                        .foregroundStyle(.secondary)
                 }
             }
         }

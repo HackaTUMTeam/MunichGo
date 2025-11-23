@@ -299,9 +299,10 @@ final class MapViewModel {
         // Initiale Suche
         await refreshNearbyPlace()
         
-        // Kontinuierliche Updates
+        // Kontinuierliche Updates - reduziert auf 30 Sekunden um Rate Limits zu vermeiden
         while isTrackingLocation && !Task.isCancelled {
-            try? await Task.sleep(nanoseconds: 15_000_000_000) // 15 Sekunden
+            try? await Task.sleep(nanoseconds: 30_000_000_000) // 30 Sekunden
+            greenScore = Int(transportDetection.getSustainabilityScore() * 100)
             await refreshNearbyPlace()
         }
     }
